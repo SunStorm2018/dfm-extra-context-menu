@@ -1,33 +1,33 @@
-Source: dde-filemanager-extra-context-menu
+Source: dde-file-manager-extramenu-plugins
 Section: utils
 Priority: optional
 Maintainer: Your Name <your.email@example.com>
 Build-Depends: debhelper-compat (= 13)
 Standards-Version: 4.6.0
-Homepage: https://github.com/your-repo/dde-filemanager-extra-context-menu
+Homepage: https://github.com/your-repo/dde-file-manager-extramenu-plugins
 
-Package: dde-filemanager-extra-context-menu
+Package: dde-file-manager-extramenu-plugins
 Architecture: all
-Depends: ${misc:Depends}, dde-filemanager-extra-context-menu-gitk, dde-filemanager-extra-context-menu-git-cola, dde-filemanager-extra-context-menu-deb-builder
+Depends: ${misc:Depends}, dde-file-manager-extramenu-gitk-plugin, dde-file-manager-extramenu-git-cola-plugin, dde-file-manager-extramenu-deb-builder-plugin
 Description: Meta package for DDE File Manager extra context menu plugins
  This is a meta package that depends on all individual context menu plugins
  for Deepin Desktop Environment (DDE) File Manager.
 
-Package: dde-filemanager-extra-context-menu-gitk
+Package: dde-file-manager-extramenu-gitk-plugin
 Architecture: all
 Depends: ${misc:Depends}, git, gitk
 Description: Gitk context menu plugin for DDE File Manager
  Provides Gitk launcher context menu option for browsing Git repository history
  and branches in DDE File Manager.
 
-Package: dde-filemanager-extra-context-menu-git-cola
+Package: dde-file-manager-extramenu-git-cola-plugin
 Architecture: all
 Depends: ${misc:Depends}, git-cola
 Description: Git Cola context menu plugin for DDE File Manager
  Provides Git Cola GUI integration context menu option for Git operations
  in DDE File Manager.
 
-Package: dde-filemanager-extra-context-menu-deb-builder
+Package: dde-file-manager-extramenu-deb-builder-plugin
 Architecture: all
 Depends: ${misc:Depends}, dpkg-dev, debhelper
 Description: DEB package builder context menu plugin for DDE File Manager

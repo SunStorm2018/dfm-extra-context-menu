@@ -1,8 +1,10 @@
-dde-filemanager-extra-context-menu (1.0-1) unstable; urgency=medium
+dde-file-manager-extramenu-plugins (1.0-1) unstable; urgency=medium
 
   * Initial release
   * Add Gitk context menu integration
-  * Add Git Cola context menu integration  
+  * Add Git Cola context menu integration
   * Add DEB package builder tool
+  * Refactor: Rename packages to follow dde-file-manager-extramenu-插件名-plugin pattern
+  * Refactor: Move resource files to /usr/share/dde-file-manager-extramenu-plugins
 
  -- zhanghongyuan <zhanghongyuan@uniontech.com>  Mon, 27 Oct 2025 11:09:00 +0800
