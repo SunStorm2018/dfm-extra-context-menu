@@ -1,0 +1,8 @@
+dde-filemanager-extra-context-menu (1.0-1) unstable; urgency=medium
+
+  * Initial release
+  * Add Gitk context menu integration
+  * Add Git Cola context menu integration  
+  * Add DEB package builder tool
+
+ -- zhanghongyuan <zhanghongyuan@uniontech.com>  Mon, 27 Oct 2025 11:09:00 +0800

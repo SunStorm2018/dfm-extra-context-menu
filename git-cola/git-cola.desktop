@@ -1,0 +1,17 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Git Cola
+Name[zh_CN]=Git Cola
+X-DFM-MenuTypes=EmptyArea
+Comment=The highly caffeinated Git GUI
+Comment[cs]=Git GUI s vysokým obsahem kofeinu
+Comment[zh_TW]=高咖啡因含量的 Git 圖形介面
+TryExec=git-cola
+Exec=git-cola -r %p
+Icon=git-cola
+StartupNotify=true
+Terminal=false
+Categories=Development;RevisionControl;
+Keywords=git;version;control;repository;gui;
+MimeType=inode/directory;

@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=DEB Package Builder
+Name[zh_CN]=DEB包构建工具
+X-DFM-MenuTypes=EmptyArea
+Comment=Build Debian packages with dpkg-buildpackage
+Comment[zh_CN]=使用dpkg-buildpackage构建Debian包
+Exec=/usr/bin/quick-build-deb.sh %p
+Icon=/usr/share/dde-filemanager-extra-context-menu/deb-package-icon.svg
+Terminal=true
+Categories=Development;System;PackageManager;
+Keywords=deb;package;build;dpkg;debian;ubuntu;
+StartupNotify=true
+MimeType=inode/directory;

@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Gitk
+Name[zh_CN]=Gitk
+X-DFM-MenuTypes=EmptyArea
+Comment=Browse Git repository history and branches
+Comment[zh_CN]=浏览Git仓库历史和分支
+Exec=/usr/bin/gitk-launcher.sh %p
+Icon=/usr/share/dde-filemanager-extra-context-menu/gitk-icon.svg
+Terminal=true
+Categories=Development;RevisionControl;
+Keywords=git;version;control;repository;browser;
+StartupNotify=true
+MimeType=inode/directory;

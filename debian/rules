@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	# No need to clean for architecture-independent package
+
+override_dh_auto_build:
+	# No build step needed for architecture-independent package
+
+override_dh_auto_install:
+	# Install files according to debian/install
+	dh_install
