@@ -1,3 +1,12 @@
+dde-file-manager-extramenu-plugins (1.1-1) unstable; urgency=medium
+
+  * Add Deepin Project Downloader context menu plugin
+  * Update dde-project-downloader.sh to support installation path
+  * Add deepin-project-downloader.desktop file
+  * Add dde-file-manager-extramenu-deepin-project-downloader-plugin.install
+
+ -- zhanghongyuan <zhanghongyuan@uniontech.com>  Mon, 27 Oct 2025 11:09:00 +0800
+
 dde-file-manager-extramenu-plugins (1.0-1) unstable; urgency=medium
 
   * Initial release

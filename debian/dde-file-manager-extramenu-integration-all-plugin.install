@@ -1,0 +1,18 @@
+# Integration All plugin files - combines all development tools
+integration-all/integration-all.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
+
+# Include all individual plugin files for complete functionality
+build-deb/deb-builder.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
+build-deb/quick-build-deb.sh usr/bin
+build-deb/deb-package-icon.svg usr/share/dde-file-manager-extramenu-plugins
+
+cat-gitk/gitk.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
+cat-gitk/gitk-launcher.sh usr/bin
+cat-gitk/gitk-icon.svg usr/share/dde-file-manager-extramenu-plugins
+
+git-cola/git-cola.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
+
+deepin-project-downloader/deepin-project-downloader.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
+deepin-project-downloader/dde-project-downloader.sh usr/bin
+deepin-project-downloader/deepin-project-downloader.svg usr/share/dde-file-manager-extramenu-plugins
+deepin-project-downloader/deepin-project-downloader-backen.py usr/share/dde-file-manager-extramenu-plugins

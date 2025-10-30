@@ -24,6 +24,53 @@ error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# D-Bus通知函数
+send_notification() {
+    local summary="$1"
+    local body="$2"
+    local urgency="$3"  # low, normal, critical
+    
+    # 使用notify-send发送桌面通知
+    if command -v notify-send >/dev/null 2>&1; then
+        local urgency_param=""
+        if [ -n "$urgency" ]; then
+            urgency_param="-u $urgency"
+        fi
+        
+        notify-send $urgency_param -a "quick-build-deb" -i "package" "$summary" "$body"
+    else
+        # 如果notify-send不可用，使用dbus-send
+        if command -v dbus-send >/dev/null 2>&1; then
+            local timeout=5000  # 5秒
+            dbus-send --session --dest=org.freedesktop.Notifications \
+                --type=method_call /org/freedesktop/Notifications \
+                org.freedesktop.Notifications.Notify \
+                string:"quick-build-deb" \
+                uint32:0 \
+                string:"package" \
+                string:"$summary" \
+                string:"$body" \
+                array:string:"" \
+                dict:string:string:"urgency","$urgency" \
+                int32:$timeout >/dev/null 2>&1 || true
+        fi
+    fi
+}
+
+# 显示构建产物路径
+show_built_packages() {
+    local source_dir="$1"
+    local deb_files=$(ls -1 ../*.deb 2>/dev/null || true)
+    
+    if [ -n "$deb_files" ]; then
+        log "构建产物:"
+        ls -la ../*.deb
+        echo "$deb_files"
+    else
+        error "未找到构建产物"
+    fi
+}
+
 # 主函数
 main() {
     local source_dir="${1:-.}"
@@ -50,6 +97,9 @@ main() {
     log "开始构建DEB包..."
     log "源码目录: $(pwd)"
     
+    # 发送开始构建通知
+    send_notification "开始构建DEB包" "正在构建: $(basename "$(pwd)")" "low"
+    
     # 设置构建环境
     export DEB_BUILD_OPTIONS="parallel=$(nproc)"
     
@@ -60,11 +110,22 @@ main() {
         success "DEB包构建成功!"
         
         # 显示构建产物
-        log "构建产物:"
-        ls -la ../*.deb 2>/dev/null || true
+        show_built_packages "$source_dir"
+        
+        # 发送成功通知
+        local deb_files=$(ls -1 ../*.deb 2>/dev/null | head -1)
+        if [ -n "$deb_files" ]; then
+            local deb_name=$(basename "$deb_files")
+            send_notification "DEB包构建完成" "成功构建: $deb_name" "normal"
+        else
+            send_notification "DEB包构建完成" "构建成功，但未找到构建产物" "normal"
+        fi
         
     else
         error "DEB包构建失败!"
+        
+        # 发送失败通知
+        send_notification "DEB包构建失败" "构建过程中出现错误，请检查构建日志" "critical"
         exit 1
     fi
 }

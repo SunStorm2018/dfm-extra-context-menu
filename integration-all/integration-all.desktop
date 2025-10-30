@@ -1,0 +1,33 @@
+[Desktop Entry]
+Type=Application
+Icon=applications-development
+Name=Development Tools
+Name[zh_CN]=开发工具
+X-DFM-MenuTypes=SingleDir;MultiFileDirs;EmptyArea;
+Comment=Integrated development tools menu
+Comment[zh_CN]=集成开发工具菜单
+Actions=DebBuilder;Gitk;GitCola;DeepinProjectDownloader;
+
+[Desktop Action DebBuilder]
+Name=DEB Package Builder
+Name[zh_CN]=DEB包构建工具
+Exec=/usr/bin/quick-build-deb.sh %f
+Icon=/usr/share/dde-file-manager-extramenu-plugins/deb-package-icon.svg
+
+[Desktop Action Gitk]
+Name=Gitk
+Name[zh_CN]=Gitk
+Exec=/usr/bin/gitk-launcher.sh %f
+Icon=/usr/share/dde-file-manager-extramenu-plugins/gitk-icon.svg
+
+[Desktop Action GitCola]
+Name=Git Cola
+Name[zh_CN]=Git Cola
+Exec=git-cola -r %f
+Icon=git-cola
+
+[Desktop Action DeepinProjectDownloader]
+Name=Deepin Project Downloader
+Name[zh_CN]=深度项目下载器
+Exec=/usr/bin/dde-project-downloader.sh %f
+Icon=/usr/share/dde-file-manager-extramenu-plugins/deepin-project-downloader.svg

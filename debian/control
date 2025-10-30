@@ -8,7 +8,7 @@ Homepage: https://github.com/your-repo/dde-file-manager-extramenu-plugins
 
 Package: dde-file-manager-extramenu-plugins
 Architecture: all
-Depends: ${misc:Depends}, dde-file-manager-extramenu-gitk-plugin, dde-file-manager-extramenu-git-cola-plugin, dde-file-manager-extramenu-deb-builder-plugin
+Depends: ${misc:Depends}, dde-file-manager-extramenu-integration-all-plugin, dde-file-manager-extramenu-gitk-plugin, dde-file-manager-extramenu-git-cola-plugin, dde-file-manager-extramenu-deb-builder-plugin, dde-file-manager-extramenu-deepin-project-downloader-plugin, dde-file-manager-extramenu-dde-dconfig-editor-plugin
 Description: Meta package for DDE File Manager extra context menu plugins
  This is a meta package that depends on all individual context menu plugins
  for Deepin Desktop Environment (DDE) File Manager.
@@ -33,3 +33,24 @@ Depends: ${misc:Depends}, dpkg-dev, debhelper
 Description: DEB package builder context menu plugin for DDE File Manager
  Provides DEB package building tool context menu option for development
  directories in DDE File Manager.
+
+Package: dde-file-manager-extramenu-deepin-project-downloader-plugin
+Architecture: all
+Depends: ${misc:Depends}, python3, git, python3-tk
+Description: Deepin Project Downloader context menu plugin for DDE File Manager
+ Provides Deepin project downloader tool context menu option for downloading
+ and managing Deepin projects from various sources in DDE File Manager.
+
+Package: dde-file-manager-extramenu-dde-dconfig-editor-plugin
+Architecture: all
+Depends: ${misc:Depends}, dde-dconfig-editor
+Description: DDE DConfig Editor context menu plugin for DDE File Manager
+ Provides DDE DConfig Editor launcher context menu option for managing system
+ and application configurations in DDE File Manager.
+
+Package: dde-file-manager-extramenu-integration-all-plugin
+Architecture: all
+Depends: ${misc:Depends}, dde-file-manager-extramenu-gitk-plugin, dde-file-manager-extramenu-git-cola-plugin, dde-file-manager-extramenu-deb-builder-plugin, dde-file-manager-extramenu-deepin-project-downloader-plugin, dde-file-manager-extramenu-dde-dconfig-editor-plugin
+Description: Integrated development tools menu plugin for DDE File Manager
+ Provides a comprehensive integrated menu with all development tools including
+ DEB builder, Gitk, Git Cola, Deepin Project Downloader, and DDE DConfig Editor in DDE File Manager.
