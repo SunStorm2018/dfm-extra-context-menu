@@ -17,3 +17,6 @@ deepin-project-downloader/deepin-project-downloader-backen.py usr/share/dde-file
 
 # dde-dconfig-editor
 dde-dconfig-editor/dde-dconfig-editor.svg usr/share/dde-file-manager-extramenu-plugins
+
+# d-feet
+d-feet/d-feet.svg usr/share/dde-file-manager-extramenu-plugins
