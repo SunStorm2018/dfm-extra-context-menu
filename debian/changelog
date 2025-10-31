@@ -1,3 +1,13 @@
+dde-file-manager-extramenu-plugins (1.3.2-1) unstable; urgency=medium
+
+  * feat(plugins): add D-Feet D-Bus debugger context menu plugin
+  * chore(debian): improve package configuration and desktop integration
+  * feat: add comprehensive development tools integration
+  * refactor: standardize package naming and resource paths
+  * feat: refactor to modular Debian package structure  - Split single package into 4 independent plugin packages  - Fixed all desktop file paths and configuration issues  - Added modular install files for selective installation  - Cleaned up compilation temporary files  - Optimized package dependencies for better management
+
+ -- zhanghongyuan <zhanghongyuan@uniontech.com>  Fri, 31 Oct 2025 12:13:02 
+
 dde-file-manager-extramenu-plugins (1.3.1-1) unstable; urgency=medium
 
   * chore(debian): improve package configuration and desktop integration
