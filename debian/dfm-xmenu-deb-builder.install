@@ -1,4 +1,4 @@
 # DEB Builder plugin files
 build-deb/deb-builder.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
 build-deb/quick-build-deb.sh usr/bin
-build-deb/deb-package-icon.svg usr/share/dde-file-manager-extramenu-plugins
+build-deb/deb-package-icon.svg usr/share/dfm-xmenu-plugins

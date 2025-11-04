@@ -1,3 +1,3 @@
 # DDE DConfig Editor plugin files
 dde-dconfig-editor/dde-dconfig-editor.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
-dde-dconfig-editor/dde-dconfig-editor.svg usr/share/dde-file-manager-extramenu-plugins
+dde-dconfig-editor/dde-dconfig-editor.svg usr/share/dfm-xmenu-plugins

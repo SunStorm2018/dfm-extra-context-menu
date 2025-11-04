@@ -1,26 +1,27 @@
-Source: dde-file-manager-extramenu-plugins
+Source: dfm-xmenu-plugins
 Section: utils
 Priority: optional
 Maintainer: zhanghongyuan <zhanghongyuan@uniontech.com>
 Build-Depends: debhelper-compat (= 13)
 Standards-Version: 4.6.0
-Homepage: https://github.com/your-repo/dde-file-manager-extramenu-plugins
+Homepage: https://github.com/your-repo/dfm-xmenu-plugins
 
-Package: dde-file-manager-extramenu-plugins
+Package: dfm-xmenu-plugins
 Architecture: all
-Depends: ${misc:Depends}, 
-  dde-file-manager-extramenu-integration-all-plugin,
-  dde-file-manager-extramenu-gitk-plugin,
-  dde-file-manager-extramenu-git-cola-plugin,
-  dde-file-manager-extramenu-deb-builder-plugin,
-  dde-file-manager-extramenu-deepin-project-downloader-plugin,
-  dde-file-manager-extramenu-dde-dconfig-editor-plugin,
-  dde-file-manager-extramenu-changelog-update-plugin
+Depends: ${misc:Depends},
+  dfm-xmenu-integration-all,
+  dfm-xmenu-gitk,
+  dfm-xmenu-git-cola,
+  dfm-xmenu-deb-builder,
+  dfm-xmenu-deepin-project-downloader,
+  dfm-xmenu-dde-dconfig-editor,
+  dfm-xmenu-changelog-update,
+  dfm-xmenu-d-feet
 Description: Meta package for DDE File Manager extra context menu plugins
  This is a meta package that depends on all individual context menu plugins
  for Deepin Desktop Environment (DDE) File Manager.
 
-Package: dde-file-manager-extramenu-gitk-plugin
+Package: dfm-xmenu-gitk
 Architecture: all
 Depends: ${misc:Depends},
   git,
@@ -29,7 +30,7 @@ Description: Gitk context menu plugin for DDE File Manager
  Provides Gitk launcher context menu option for browsing Git repository history
  and branches in DDE File Manager.
 
-Package: dde-file-manager-extramenu-git-cola-plugin
+Package: dfm-xmenu-git-cola
 Architecture: all
 Depends: ${misc:Depends},
   git-cola
@@ -37,7 +38,7 @@ Description: Git Cola context menu plugin for DDE File Manager
  Provides Git Cola GUI integration context menu option for Git operations
  in DDE File Manager.
 
-Package: dde-file-manager-extramenu-deb-builder-plugin
+Package: dfm-xmenu-deb-builder
 Architecture: all
 Depends: ${misc:Depends},
   dpkg-dev,
@@ -46,9 +47,9 @@ Description: DEB package builder context menu plugin for DDE File Manager
  Provides DEB package building tool context menu option for development
  directories in DDE File Manager.
 
-Package: dde-file-manager-extramenu-deepin-project-downloader-plugin
+Package: dfm-xmenu-deepin-project-downloader
 Architecture: all
-Depends: ${misc:Depends}, 
+Depends: ${misc:Depends},
   python3,
   git,
   python3-tk
@@ -56,15 +57,15 @@ Description: Deepin Project Downloader context menu plugin for DDE File Manager
  Provides Deepin project downloader tool context menu option for downloading
  and managing Deepin projects from various sources in DDE File Manager.
 
-Package: dde-file-manager-extramenu-dde-dconfig-editor-plugin
+Package: dfm-xmenu-dde-dconfig-editor
 Architecture: all
-Depends: ${misc:Depends}, 
+Depends: ${misc:Depends},
   dde-dconfig-editor
 Description: DDE DConfig Editor context menu plugin for DDE File Manager
  Provides DDE DConfig Editor launcher context menu option for managing system
  and application configurations in DDE File Manager.
 
-Package: dde-file-manager-extramenu-changelog-update-plugin
+Package: dfm-xmenu-changelog-update
 Architecture: all
 Depends: ${misc:Depends},
   git,
@@ -74,7 +75,15 @@ Description: ChangeLog upgrade context menu plugin for DDE File Manager
  Provides ChangeLog upgrade tool context menu option for automatically updating
  Debian changelog and version information in DDE File Manager.
 
-Package: dde-file-manager-extramenu-integration-all-plugin
+Package: dfm-xmenu-d-feet
+Architecture: all
+Depends: ${misc:Depends},
+  d-feet
+Description: D-Feet D-Bus debugger context menu plugin for DDE File Manager
+ Provides D-Feet D-Bus debugger launcher context menu option for debugging
+ D-Bus services in DDE File Manager.
+
+Package: dfm-xmenu-integration-all
 Architecture: all
 Depends: ${misc:Depends},
   git,
@@ -84,7 +93,8 @@ Depends: ${misc:Depends},
   python3,
   python3-tk,
   dde-dconfig-editor,
-  devscripts
+  devscripts,
+  d-feet
 Description: Integrated development tools menu plugin for DDE File Manager
  Provides a comprehensive integrated menu with all development tools including
- DEB builder, Gitk, Git Cola, Deepin Project Downloader, DDE DConfig Editor, and ChangeLog Upgrade in DDE File Manager.
+ DEB builder, Gitk, Git Cola, Deepin Project Downloader, DDE DConfig Editor, ChangeLog Upgrade, and D-Feet D-Bus debugger in DDE File Manager.

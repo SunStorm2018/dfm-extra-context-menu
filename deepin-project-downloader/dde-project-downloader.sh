@@ -82,8 +82,8 @@ echo "[成功] 环境检查完成"
 
 # 运行Python应用
 # 检查是否在安装路径下运行
-if [ -f /usr/share/dde-file-manager-extramenu-plugins/deepin-project-downloader-backen.py ]; then
-    python3 /usr/share/dde-file-manager-extramenu-plugins/deepin-project-downloader-backen.py
+if [ -f /usr/share/dfm-xmenu-plugins/deepin-project-downloader-backen.py ]; then
+    python3 /usr/share/dfm-xmenu-plugins/deepin-project-downloader-backen.py
 else
     python3 deepin-project-downloader-backen.py
 fi

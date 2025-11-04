@@ -20,13 +20,14 @@ rm -rf app_logs/ .qm/
 # Clean debian packaging directories and files
 echo "Cleaning debian packaging files..."
 rm -rf debian/.debhelper/
-rm -rf debian/dde-file-manager-extramenu-dde-dconfig-editor-plugin/
-rm -rf debian/dde-file-manager-extramenu-deb-builder-plugin/
-rm -rf debian/dde-file-manager-extramenu-deepin-project-downloader-plugin/
-rm -rf debian/dde-file-manager-extramenu-git-cola-plugin/
-rm -rf debian/dde-file-manager-extramenu-gitk-plugin/
-rm -rf debian/dde-file-manager-extramenu-integration-all-plugin/
-rm -rf debian/dde-file-manager-extramenu-plugins/
+rm -rf debian/dfm-xmenu-dde-dconfig-editor/
+rm -rf debian/dfm-xmenu-deb-builder/
+rm -rf debian/dfm-xmenu-deepin-project-downloader/
+rm -rf debian/dfm-xmenu-git-cola/
+rm -rf debian/dfm-xmenu-gitk/
+rm -rf debian/dfm-xmenu-integration-all/
+rm -rf debian/dfm-xmenu-plugins/
+rm -rf debian/dfm-xmenu-d-feet/
 rm -f debian/files debian/debhelper-build-stamp
 rm -f debian/*.log debian/*.substvars
 

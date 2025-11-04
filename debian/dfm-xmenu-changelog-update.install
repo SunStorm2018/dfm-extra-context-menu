@@ -1,5 +1,5 @@
 # ChangeLog 升级插件文件
 debian-changelog/changelog-update.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
 debian-changelog/changelog-update-launcher.sh usr/bin
-debian-changelog/update-changelog.svg usr/share/dde-file-manager-extramenu-plugins
-debian-changelog/debian-version-update.sh usr/share/dde-file-manager-extramenu-plugins
+debian-changelog/update-changelog.svg usr/share/dfm-xmenu-plugins
+debian-changelog/debian_version_update.py usr/share/dfm-xmenu-plugins

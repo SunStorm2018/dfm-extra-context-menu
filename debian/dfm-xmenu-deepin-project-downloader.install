@@ -1,5 +1,5 @@
 # Deepin Project Downloader plugin files
 deepin-project-downloader/deepin-project-downloader.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
 deepin-project-downloader/dde-project-downloader.sh usr/bin
-deepin-project-downloader/deepin-project-downloader.svg usr/share/dde-file-manager-extramenu-plugins
-deepin-project-downloader/deepin-project-downloader-backen.py usr/share/dde-file-manager-extramenu-plugins
+deepin-project-downloader/deepin-project-downloader.svg usr/share/dfm-xmenu-plugins
+deepin-project-downloader/deepin-project-downloader-backen.py usr/share/dfm-xmenu-plugins

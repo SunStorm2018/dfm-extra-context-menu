@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Icon=/usr/share/dde-file-manager-extramenu-plugins/integration.svg
+Icon=/usr/share/dfm-xmenu-plugins/integration.svg
 Name=Development Tools
 Name[zh_CN]=开发工具合集
 X-DFM-MenuTypes=SingleDir;MultiFileDirs;EmptyArea;
@@ -12,34 +12,34 @@ Actions=DebBuilder;Gitk;DeepinProjectDownloader;DConfigeEditor;DFeet;ChangeLogUp
 Name=DEB Package Builder
 Name[zh_CN]=构建DEB包
 Exec=/usr/bin/quick-build-deb.sh %p
-Icon=/usr/share/dde-file-manager-extramenu-plugins/deb-package-icon.svg
+Icon=/usr/share/dfm-xmenu-plugins/deb-package-icon.svg
 
 [Desktop Action Gitk]
 Name=Gitk
 Name[zh_CN]=Gitk
 Exec=/usr/bin/gitk-launcher.sh %p
-Icon=/usr/share/dde-file-manager-extramenu-plugins/gitk-icon.svg
+Icon=/usr/share/dfm-xmenu-plugins/gitk-icon.svg
 
 [Desktop Action DeepinProjectDownloader]
 Name=Deepin Project Downloader
 Name[zh_CN]=Deepin项目下载器
 Exec=/usr/bin/dde-project-downloader.sh %p
-Icon=/usr/share/dde-file-manager-extramenu-plugins/deepin-project-downloader.svg
+Icon=/usr/share/dfm-xmenu-plugins/deepin-project-downloader.svg
 
 [Desktop Action DConfigeEditor]
 Name=Deepin DConfige Editor
 Name[zh_CN]=DConfig编辑器
 Exec=/usr/bin/dde-dconfig-editor
-Icon=/usr/share/dde-file-manager-extramenu-plugins/dde-dconfig-editor.svg
+Icon=/usr/share/dfm-xmenu-plugins/dde-dconfig-editor.svg
 
 [Desktop Action DFeet]
 Name=D-Feet
 Name[zh_CN]=D-Feet
 Exec=d-feet
-Icon=/usr/share/dde-file-manager-extramenu-plugins/d-feet.svg
+Icon=/usr/share/dfm-xmenu-plugins/d-feet.svg
 
 [Desktop Action ChangeLogUpdate]
 Name=ChangeLog Upgrade
 Name[zh_CN]=ChangeLog 升级
 Exec=/usr/bin/changelog-update-launcher.sh %p
-Icon=/usr/share/dde-file-manager-extramenu-plugins/update-changelog.svg
+Icon=/usr/share/dfm-xmenu-plugins/update-changelog.svg
