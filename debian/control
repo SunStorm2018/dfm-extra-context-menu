@@ -14,7 +14,8 @@ Depends: ${misc:Depends},
   dde-file-manager-extramenu-git-cola-plugin,
   dde-file-manager-extramenu-deb-builder-plugin,
   dde-file-manager-extramenu-deepin-project-downloader-plugin,
-  dde-file-manager-extramenu-dde-dconfig-editor-plugin
+  dde-file-manager-extramenu-dde-dconfig-editor-plugin,
+  dde-file-manager-extramenu-changelog-update-plugin
 Description: Meta package for DDE File Manager extra context menu plugins
  This is a meta package that depends on all individual context menu plugins
  for Deepin Desktop Environment (DDE) File Manager.
@@ -63,16 +64,27 @@ Description: DDE DConfig Editor context menu plugin for DDE File Manager
  Provides DDE DConfig Editor launcher context menu option for managing system
  and application configurations in DDE File Manager.
 
+Package: dde-file-manager-extramenu-changelog-update-plugin
+Architecture: all
+Depends: ${misc:Depends},
+  git,
+  devscripts,
+  dpkg-dev
+Description: ChangeLog upgrade context menu plugin for DDE File Manager
+ Provides ChangeLog upgrade tool context menu option for automatically updating
+ Debian changelog and version information in DDE File Manager.
+
 Package: dde-file-manager-extramenu-integration-all-plugin
 Architecture: all
 Depends: ${misc:Depends},
   git,
   gitk,
   dpkg-dev,
-  debhelper, 
+  debhelper,
   python3,
-  python3-tk, 
-  dde-dconfig-editor
+  python3-tk,
+  dde-dconfig-editor,
+  devscripts
 Description: Integrated development tools menu plugin for DDE File Manager
  Provides a comprehensive integrated menu with all development tools including
- DEB builder, Gitk, Git Cola, Deepin Project Downloader, and DDE DConfig Editor in DDE File Manager.
+ DEB builder, Gitk, Git Cola, Deepin Project Downloader, DDE DConfig Editor, and ChangeLog Upgrade in DDE File Manager.

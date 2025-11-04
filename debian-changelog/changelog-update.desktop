@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ChangeLog 升级
+Name[zh_CN]=ChangeLog 升级
+X-DFM-MenuTypes=EmptyArea
+Comment=Automatically update Debian changelog and version information
+Comment[zh_CN]=自动更新Debian changelog和版本信息
+Exec=/usr/bin/changelog-update-launcher.sh %p
+Icon=/usr/share/dde-file-manager-extramenu-plugins/update-changelog.svg
+Terminal=true
+Categories=Development;RevisionControl;
+Keywords=debian;changelog;version;update;packaging;
+StartupNotify=true
+MimeType=inode/directory;

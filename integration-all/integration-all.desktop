@@ -6,7 +6,7 @@ Name[zh_CN]=开发工具合集
 X-DFM-MenuTypes=SingleDir;MultiFileDirs;EmptyArea;
 Comment=Integrated development tools menu
 Comment[zh_CN]=集成开发工具菜单
-Actions=DebBuilder;Gitk;DeepinProjectDownloader;DConfigeEditor;DFeet
+Actions=DebBuilder;Gitk;DeepinProjectDownloader;DConfigeEditor;DFeet;ChangeLogUpdate
 
 [Desktop Action DebBuilder]
 Name=DEB Package Builder
@@ -37,3 +37,9 @@ Name=D-Feet
 Name[zh_CN]=D-Feet
 Exec=d-feet
 Icon=/usr/share/dde-file-manager-extramenu-plugins/d-feet.svg
+
+[Desktop Action ChangeLogUpdate]
+Name=ChangeLog Upgrade
+Name[zh_CN]=ChangeLog 升级
+Exec=/usr/bin/changelog-update-launcher.sh %p
+Icon=/usr/share/dde-file-manager-extramenu-plugins/update-changelog.svg

@@ -26,14 +26,9 @@ fi
 # 切换到目标目录
 cd "$target_path"
 
-# 检查是否为Git仓库
-if [ ! -d ".git" ]; then
+# 检查是否为Git仓库（支持子目录）
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
     echo "警告：当前目录不是Git仓库: $target_path"
-    echo "是否仍要启动gitk？(y/N)"
-    read -r response
-    if [[ ! "$response" =~ ^[Yy]$ ]]; then
-        exit 0
-    fi
 fi
 
 # 启动gitk
