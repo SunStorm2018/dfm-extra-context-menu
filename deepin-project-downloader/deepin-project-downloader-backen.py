@@ -285,8 +285,11 @@ class DeepinProjectDownloader:
                 "gitee": "https://gitee.com/linuxdeepin/deepin-calculator.git", 
                 "github": "https://github.com/linuxdeepin/deepin-calculator.git"
             },
+            "media-debuger": {
+                "gitee": "https://gitee.com/sunstom/media-debuger.git", 
+                "github": "https://github.com/SunStorm2018/media-debuger.git"
+            },
             "os-config": {
-                "gerrit": "https://gerrit.uniontech.com/base/os-config.git",
                 "gitee": "https://gerrit.uniontech.com/base/os-config.git",
                 "github": "https://gerrit.uniontech.com/base/os-config.git"
             }
