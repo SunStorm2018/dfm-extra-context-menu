@@ -57,6 +57,42 @@ send_notification() {
     fi
 }
 
+# 清理构建缓存函数
+clean_build_cache() {
+    local source_dir="$1"
+    
+    log "开始清理构建缓存..."
+    
+    # 切换到源码目录执行清理
+    cd "$source_dir"
+    
+    # 使用dh_clean清理构建缓存
+    if command -v dh_clean >/dev/null 2>&1; then
+        log "执行: dh_clean"
+        if dh_clean; then
+            success "使用dh_clean清理构建缓存成功!"
+        else
+            error "使用dh_clean清理构建缓存失败!"
+            return 1
+        fi
+    else
+        error "dh_clean命令未找到，请确保已安装debhelper包"
+        return 1
+    fi
+    
+    # 额外清理debian构建目录
+    log "清理debian构建目录..."
+    rm -rf debian/.debhelper/
+    rm -rf debian/dfm-xmenu-*/
+    rm -f debian/files debian/debhelper-build-stamp
+    rm -f debian/*.log debian/*.substvars
+    
+    success "构建缓存清理完成!"
+    
+    # 发送清理完成通知
+    send_notification "构建缓存清理完成" "已清理: $(basename "$source_dir")" "normal"
+}
+
 # 显示构建产物路径
 show_built_packages() {
     local source_dir="$1"
@@ -74,6 +110,7 @@ show_built_packages() {
 # 主函数
 main() {
     local source_dir="${1:-.}"
+    local clean_after_build="${2:-yes}"  # 默认构建后清理
     
     echo "=========================================="
     echo "        快速DEB包构建"
@@ -96,6 +133,7 @@ main() {
     
     log "开始构建DEB包..."
     log "源码目录: $(pwd)"
+    log "构建后清理: $clean_after_build"
     
     # 发送开始构建通知
     send_notification "开始构建DEB包" "正在构建: $(basename "$(pwd)")" "low"
@@ -106,7 +144,11 @@ main() {
     # 执行构建命令
     log "执行: dpkg-buildpackage -us -uc -b"
     
+    # 构建结果标志
+    local build_success=false
+    
     if dpkg-buildpackage -us -uc -b; then
+        build_success=true
         success "DEB包构建成功!"
         
         # 显示构建产物
@@ -126,6 +168,23 @@ main() {
         
         # 发送失败通知
         send_notification "DEB包构建失败" "构建过程中出现错误，请检查构建日志" "critical"
+    fi
+    
+    # 无论构建成功还是失败，都执行清理（如果设置了清理选项）
+    if [ "$clean_after_build" = "yes" ]; then
+        echo ""
+        if [ "$build_success" = true ]; then
+            log "开始清理构建缓存..."
+        else
+            log "构建失败，开始清理构建缓存..."
+        fi
+        clean_build_cache "$source_dir"
+    else
+        log "跳过构建缓存清理"
+    fi
+    
+    # 如果构建失败，退出码为1
+    if [ "$build_success" = false ]; then
         exit 1
     fi
 }
@@ -135,14 +194,23 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     cat << EOF
 快速DEB包构建脚本
 
-用法: $0 [源码目录]
+用法: $0 [源码目录] [构建后清理选项]
 
 参数:
-    源码目录    包含debian目录的源码路径 (默认: 当前目录)
+    源码目录        包含debian目录的源码路径 (默认: 当前目录)
+    构建后清理选项  yes/no (默认: yes，构建完成后自动清理构建缓存)
 
 示例:
-    $0                    # 在当前目录构建
-    $0 /path/to/source    # 在指定目录构建
+    $0                    # 在当前目录构建并清理
+    $0 /path/to/source    # 在指定目录构建并清理
+    $0 . no               # 在当前目录构建但不清理
+    $0 /path/to/source yes # 在指定目录构建并清理
+
+功能特性:
+    - 自动并行构建 (使用所有可用CPU核心)
+    - 构建完成后自动使用dh_clean清理构建缓存
+    - 桌面通知提示构建状态
+    - 显示构建产物信息
 
 EOF
     exit 0
