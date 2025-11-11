@@ -111,6 +111,7 @@ show_built_packages() {
 main() {
     local source_dir="${1:-.}"
     local clean_after_build="${2:-yes}"  # 默认构建后清理
+    local parallel_jobs="${3:-auto}"     # 并行任务数，默认自动检测
     
     echo "=========================================="
     echo "        快速DEB包构建"
@@ -131,25 +132,64 @@ main() {
     # 切换到源码目录
     cd "$source_dir"
     
+    # 确定并行任务数
+    local cpu_count=$(nproc)
+    local parallel_num
+    
+    if [ "$parallel_jobs" = "auto" ]; then
+        parallel_num=$cpu_count
+    elif [ "$parallel_jobs" = "half" ]; then
+        parallel_num=$((cpu_count / 2))
+        if [ $parallel_num -lt 1 ]; then
+            parallel_num=1
+        fi
+    elif [[ "$parallel_jobs" =~ ^[0-9]+$ ]]; then
+        parallel_num=$parallel_jobs
+    else
+        error "无效的并行任务数: $parallel_jobs"
+        exit 1
+    fi
+    
     log "开始构建DEB包..."
     log "源码目录: $(pwd)"
     log "构建后清理: $clean_after_build"
+    log "系统CPU核心数: $cpu_count"
+    log "使用并行任务数: $parallel_num"
     
     # 发送开始构建通知
-    send_notification "开始构建DEB包" "正在构建: $(basename "$(pwd)")" "low"
+    send_notification "开始构建DEB包" "正在构建: $(basename "$(pwd)") (并行: $parallel_num)" "low"
     
     # 设置构建环境
-    export DEB_BUILD_OPTIONS="parallel=$(nproc)"
+    export DEB_BUILD_OPTIONS="parallel=$parallel_num"
+    
+    # 验证debian/rules是否支持并行构建
+    log "验证debian/rules配置..."
+    if grep -q "parallel" debian/rules; then
+        success "debian/rules已配置并行构建支持"
+    else
+        log "警告: debian/rules可能未正确配置并行构建"
+        log "当前DEB_BUILD_OPTIONS=$DEB_BUILD_OPTIONS"
+    fi
     
     # 执行构建命令
     log "执行: dpkg-buildpackage -us -uc -b"
+    log "构建选项: DEB_BUILD_OPTIONS=$DEB_BUILD_OPTIONS"
     
     # 构建结果标志
     local build_success=false
     
+    # 记录构建开始时间
+    local build_start_time=$(date +%s)
+    
     if dpkg-buildpackage -us -uc -b; then
+        local build_end_time=$(date +%s)
+        local build_duration=$((build_end_time - build_start_time))
+        local build_minutes=$((build_duration / 60))
+        local build_seconds=$((build_duration % 60))
+        
         build_success=true
         success "DEB包构建成功!"
+        success "构建耗时: ${build_minutes}分${build_seconds}秒 (并行任务数: $parallel_num)"
         
         # 显示构建产物
         show_built_packages "$source_dir"
@@ -194,23 +234,34 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     cat << EOF
 快速DEB包构建脚本
 
-用法: $0 [源码目录] [构建后清理选项]
+用法: $0 [源码目录] [构建后清理选项] [并行任务数]
 
 参数:
     源码目录        包含debian目录的源码路径 (默认: 当前目录)
     构建后清理选项  yes/no (默认: yes，构建完成后自动清理构建缓存)
+    并行任务数      auto/half/数字 (默认: auto)
+                    auto  - 自动使用所有CPU核心
+                    half  - 使用一半CPU核心
+                    数字  - 指定具体的并行任务数
 
 示例:
-    $0                    # 在当前目录构建并清理
-    $0 /path/to/source    # 在指定目录构建并清理
-    $0 . no               # 在当前目录构建但不清理
-    $0 /path/to/source yes # 在指定目录构建并清理
+    $0                           # 在当前目录构建并清理，使用所有CPU核心
+    $0 /path/to/source           # 在指定目录构建并清理，使用所有CPU核心
+    $0 . no                      # 在当前目录构建但不清理，使用所有CPU核心
+    $0 . yes half                # 在当前目录构建并清理，使用一半CPU核心
+    $0 . yes 8                   # 在当前目录构建并清理，使用8个并行任务
+    $0 /path/to/source no 4      # 在指定目录构建但不清理，使用4个并行任务
 
 功能特性:
-    - 自动并行构建 (使用所有可用CPU核心)
+    - 灵活的并行构建选项 (auto/half/指定数字)
+    - 自动检测CPU核心数 (使用nproc命令)
     - 构建完成后自动使用dh_clean清理构建缓存
     - 桌面通知提示构建状态
     - 显示构建产物信息
+    - DEB_BUILD_OPTIONS环境变量正确设置
+
+环境变量:
+    DEB_BUILD_OPTIONS  自动设置为 parallel=N，其中N为并行任务数
 
 EOF
     exit 0
