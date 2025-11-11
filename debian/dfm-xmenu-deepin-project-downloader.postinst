@@ -1,0 +1,145 @@
+#!/usr/bin/python3
+
+"""
+Post-installation script for dfm-xmenu-deepin-project-downloader package
+This script will update integration-all.desktop to include the deepin-project-downloader plugin
+"""
+
+import os
+import re
+import sys
+import tempfile
+
+def print_header():
+    """打印美化的标题"""
+    print("=" * 60)
+    print("DFM Deepin 项目下载器插件安装程序")
+    print("=" * 60)
+
+def print_success(message):
+    """打印成功消息"""
+    print(f"[SUCCESS] {message}")
+
+def print_info(message):
+    """打印信息消息"""
+    print(f"[INFO] {message}")
+
+def print_warning(message):
+    """打印警告消息"""
+    print(f"[WARNING] {message}")
+
+def main():
+    print_header()
+    
+    integration_desktop = "/usr/share/deepin/dde-file-manager/oem-menuextensions/integration-all.desktop"
+    # 从脚本文件名中提取插件名称
+    script_name = os.path.basename(sys.argv[0])
+    plugin_name = script_name.replace('dfm-xmenu-', '').replace('.postinst', '')
+    plugin_action = script_name.replace('dfm-xmenu-', '').replace('.postinst', '')
+    
+    # 检查 integration-all.desktop 文件是否存在
+    if not os.path.exists(integration_desktop):
+        print_warning(f"找不到 {integration_desktop} 文件")
+        print_info("请确保已安装 dfm-xmenu-integration-all 包")
+        return 0
+    
+    print_info(f"正在安装/更新{plugin_name}到集成菜单...")
+    
+    try:
+        # 读取文件内容
+        with open(integration_desktop, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        
+        # 首先移除可能存在的旧版本插件配置
+        # 处理 Actions 行，移除插件
+        for i, line in enumerate(lines):
+            if line.startswith('Actions='):
+                # 移除 ;plugin_action 或 ;plugin_action; 或 plugin_action
+                actions_line = re.sub(f';{plugin_action};?', '', line)
+                # 清理可能的多余分号
+                actions_line = re.sub(r';+', ';', actions_line)
+                # 移除末尾的分号
+                actions_line = actions_line.rstrip(';') + '\n'
+                lines[i] = actions_line
+                break
+        
+        # 移除 [Desktop Action plugin_action] 部分
+        new_lines = []
+        skip = False
+        for line in lines:
+            if re.match(f'^\\[Desktop Action {plugin_action}\\]', line):
+                skip = True
+                continue
+            elif re.match(r'^\[Desktop Action', line) and skip:
+                skip = False
+                new_lines.append(line)
+            elif not skip:
+                new_lines.append(line)
+        
+        lines = new_lines
+        
+        # 检查是否已经在 Actions 行中包含插件
+        plugin_in_actions = False
+        for line in lines:
+            if line.startswith('Actions=') and plugin_action in line:
+                plugin_in_actions = True
+                break
+        
+        if not plugin_in_actions:
+            # 更新 Actions 行，添加插件
+            for i, line in enumerate(lines):
+                if line.startswith('Actions='):
+                    lines[i] = line.rstrip() + f';{plugin_action}\n'
+                    break
+        
+        # 检查是否已经存在 [Desktop Action plugin_action] 部分
+        plugin_action_exists = False
+        for line in lines:
+            if re.match(f'^\\[Desktop Action {plugin_action}\\]', line):
+                plugin_action_exists = True
+                break
+        
+        if not plugin_action_exists:
+            # 确保文件末尾有换行符
+            if lines and not lines[-1].endswith('\n'):
+                lines[-1] += '\n'
+            elif not lines:
+                lines = ['\n']
+            
+            # 添加插件的 Desktop Action 配置
+            plugin_config = [
+                f'[Desktop Action {plugin_action}]\n',
+                f'Name={plugin_action}\n',
+                f'Name[zh_CN]={plugin_action}\n',
+                f'Exec=/usr/bin/dde-project-downloader.sh %p\n',
+                f'Icon=/usr/share/dfm-xmenu-plugins/deepin-project-downloader.svg\n'
+            ]
+            lines.extend(plugin_config)
+        
+        # 写入临时文件
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False) as temp_file:
+            temp_file.writelines(lines)
+            temp_file_path = temp_file.name
+        
+        # 替换原文件
+        # 先读取临时文件内容，然后写入原文件
+        with open(temp_file_path, 'r', encoding='utf-8') as temp_file:
+            content = temp_file.read()
+        
+        with open(integration_desktop, 'w', encoding='utf-8') as target_file:
+            target_file.write(content)
+        
+        # 删除临时文件
+        os.unlink(temp_file_path)
+        
+        print_success(f"「{plugin_name}」已成功集成到DFM菜单中！")
+        print_info("重启文件管理器后，右键菜单中将显示相关选项。")
+        print("=" * 60)
+        return 0
+        
+    except Exception as e:
+        print_warning(f"错误：{str(e)}")
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main())
