@@ -98,13 +98,3 @@ Depends: ${misc:Depends},
 Description: Integrated development tools menu plugin for DDE File Manager
  Provides a comprehensive integrated menu with all development tools including
  DEB builder, Gitk, Git Cola, Deepin Project Downloader, DDE DConfig Editor, ChangeLog Upgrade, and D-Feet D-Bus debugger in DDE File Manager.
-
-Package: dfm-xmenu-test
-Architecture: all
-Depends: ${misc:Depends},
-  dfm-xmenu-integration-all,
-  zenity | x11-utils,
-  python3
-Description: Test context menu plugin for DDE File Manager
- Provides a test plugin for demonstrating dynamic integration with the
- DDE File Manager context menu system.
