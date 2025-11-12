@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Visual Studio Code
+Name[zh_CN]=Visual Studio Code
+X-DFM-MenuTypes=EmptyArea;SingleDir;MultiFileDirs
+Comment=Code Editing. Redefined.
+Comment[zh_CN]=代码编辑。重新定义。
+Exec=/usr/bin/vscode-launcher.sh %p
+Icon=/usr/share/dfm-xmenu-plugins/vscode-icon.svg
+Terminal=false
+Categories=TextEditor;Development;IDE;
+Keywords=code;editor;development;programming;
+StartupNotify=true
+MimeType=inode/directory;application/x-code-workspace;
