@@ -1,7 +1,7 @@
 # DDE File Manager Extra Context Menu Plugins
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/your-repo/dfm-xmenu-plugins)
+[![Version](https://img.shields.io/badge/version-1.4.4-blue.svg)](https://github.com/your-repo/dfm-xmenu-plugins)
 
 为深度桌面环境（DDE）文件管理器提供额外上下文菜单插件的集合，增强开发者的工作效率。
 
@@ -171,7 +171,7 @@ dpkg-buildpackage -us -uc -b
 
 ## 版本历史
 
-- **v1.5.0** (2025-11-12) - 添加 Visual Studio Code 和 Qt Creator 插件，统一通知系统
+- **v1.4.4** (2025-11-12) - 添加 Visual Studio Code 和 Qt Creator 插件，统一通知系统
 - **v1.4.1** (2025-11-07) - 添加媒体调试器仓库链接
 - **v1.4** (2025-11-04) - 重命名包名为 dfm-xmenu-* 模式
 - **v1.3** (2025-10-31) - 添加 D-Feet D-Bus 调试器，改进包配置

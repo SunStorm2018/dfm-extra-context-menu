@@ -1,3 +1,14 @@
+dfm-xmenu-plugins (1.4.4-1) unstable; urgency=medium
+
+  * chore: Update version to 1.4.4-1
+  * feat: add Visual Studio Code and Qt Creator plugins to README and installation instructions
+  * feat(qtcreator): add Qt Creator integration plugin with project detection
+  * feat(vscode): add Visual Studio Code integration plugin
+  * refactor: streamline error notification handling in quick-build-deb.sh
+  * chore(debian): remove test package
+
+ -- zhanghongyuan <zhanghongyuan@uniontech.com>  Wed, 12 Nov 2025 15:24:24 +0800
+
 dfm-xmenu-plugins (1.4.3-1) unstable; urgency=medium
 
   * chore: Update version to 1.4.3-1
