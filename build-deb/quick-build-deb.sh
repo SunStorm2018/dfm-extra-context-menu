@@ -22,38 +22,26 @@ success() {
 
 error() {
     echo -e "${RED}[ERROR]${NC} $1"
+    # 统一用 send_notification 发送错误通知
+    send_notification "构建错误" "$1" "critical" "dialog-error"
 }
 
-# D-Bus通知函数
+# 通知函数
 send_notification() {
     local summary="$1"
     local body="$2"
-    local urgency="$3"  # low, normal, critical
-    
+    local urgency="${3:-normal}"  # low, normal, critical，默认 normal
+    local icon="${4:-package}"    # 可选 icon，默认 package
+
     # 使用notify-send发送桌面通知
     if command -v notify-send >/dev/null 2>&1; then
         local urgency_param=""
         if [ -n "$urgency" ]; then
             urgency_param="-u $urgency"
         fi
-        
-        notify-send $urgency_param -a "quick-build-deb" -i "package" "$summary" "$body"
+        notify-send $urgency_param -a "quick-build-deb" -i "$icon" "$summary" "$body"
     else
-        # 如果notify-send不可用，使用dbus-send
-        if command -v dbus-send >/dev/null 2>&1; then
-            local timeout=5000  # 5秒
-            dbus-send --session --dest=org.freedesktop.Notifications \
-                --type=method_call /org/freedesktop/Notifications \
-                org.freedesktop.Notifications.Notify \
-                string:"quick-build-deb" \
-                uint32:0 \
-                string:"package" \
-                string:"$summary" \
-                string:"$body" \
-                array:string:"" \
-                dict:string:string:"urgency","$urgency" \
-                int32:$timeout >/dev/null 2>&1 || true
-        fi
+        echo -e "${RED}[NOTIFY-ERROR]${NC} notify-send 未找到，无法发送桌面通知: $summary - $body"
     fi
 }
 
