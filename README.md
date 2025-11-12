@@ -1,7 +1,7 @@
 # DDE File Manager Extra Context Menu Plugins
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.4.1-blue.svg)](https://github.com/your-repo/dfm-xmenu-plugins)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/your-repo/dfm-xmenu-plugins)
 
 为深度桌面环境（DDE）文件管理器提供额外上下文菜单插件的集合，增强开发者的工作效率。
 
@@ -16,6 +16,8 @@
 - **DEB 包构建器** - 快速构建 Debian 软件包
 - **Gitk** - Git 仓库历史可视化工具
 - **Git Cola** - 图形化 Git 操作界面
+- **Visual Studio Code** - 跨平台代码编辑器，智能检测工程目录
+- **Qt Creator** - 跨平台 Qt 开发 IDE，智能检测 qmake/CMake 工程
 - **Deepin 项目下载器** - 从各种来源下载和管理深度项目
 - **DDE DConfig 编辑器** - 系统和应用程序配置管理
 - **D-Feet** - D-Bus 调试和检查工具
@@ -45,6 +47,9 @@ sudo apt install dfm-xmenu-deb-builder
 
 # Git 工具
 sudo apt install dfm-xmenu-gitk dfm-xmenu-git-cola
+
+# 代码编辑器和 IDE
+sudo apt install dfm-xmenu-vscode dfm-xmenu-qtcreator
 
 # 项目管理工具
 sudo apt install dfm-xmenu-deepin-project-downloader
@@ -85,6 +90,14 @@ dfm-xmenu-plugins/
 │   └── gitk-icon.svg          # 图标文件
 ├── git-cola/                  # Git Cola 集成
 │   └── git-cola.desktop       # Git Cola 菜单项
+├── vscode/                    # Visual Studio Code 集成
+│   ├── vscode.desktop         # VSCode 菜单项
+│   ├── vscode-launcher.sh     # VSCode 启动脚本
+│   └── vscode-icon.svg        # 图标文件
+├── qtcreator/                # Qt Creator 集成
+│   ├── qtcreator.desktop      # Qt Creator 菜单项
+│   ├── qtcreator-launcher.sh  # Qt Creator 启动脚本
+│   └── qtcreator-icon.svg     # 图标文件
 ├── dde-dconfig-editor/        # DConfig 编辑器
 │   ├── dde-dconfig-editor.desktop
 │   └── dde-dconfig-editor.svg
@@ -158,6 +171,7 @@ dpkg-buildpackage -us -uc -b
 
 ## 版本历史
 
+- **v1.5.0** (2025-11-12) - 添加 Visual Studio Code 和 Qt Creator 插件，统一通知系统
 - **v1.4.1** (2025-11-07) - 添加媒体调试器仓库链接
 - **v1.4** (2025-11-04) - 重命名包名为 dfm-xmenu-* 模式
 - **v1.3** (2025-10-31) - 添加 D-Feet D-Bus 调试器，改进包配置
@@ -174,6 +188,9 @@ dpkg-buildpackage -us -uc -b
 ### 功能依赖
 - `git`, `gitk` - Git 版本控制
 - `git-cola` - Git 图形界面
+- `code` - Visual Studio Code 编辑器
+- `qtcreator` - Qt Creator IDE
+- `zenity | kdialog` - 图形对话框支持
 - `dpkg-dev`, `debhelper` - DEB 包构建
 - `python3`, `python3-tk` - Python 运行环境
 - `dde-dconfig-editor` - DDE 配置编辑器
