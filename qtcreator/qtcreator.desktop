@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Qt Creator
+Name[zh_CN]=Qt Creator
+X-DFM-MenuTypes=EmptyArea;SingleDir;MultiFileDirs
+Comment=Cross-platform IDE for Qt development
+Comment[zh_CN]=跨平台Qt开发集成环境
+Exec=/usr/bin/qtcreator-launcher.sh %p
+Icon=/usr/share/dfm-xmenu-plugins/qtcreator-icon.svg
+Terminal=false
+Categories=Development;IDE;Qt;
+Keywords=qt;development;ide;programming;cmake;qmake;
+StartupNotify=true
+MimeType=inode/directory;

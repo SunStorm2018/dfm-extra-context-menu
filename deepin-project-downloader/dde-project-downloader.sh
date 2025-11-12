@@ -2,6 +2,29 @@
 
 # Deepin 项目下载器启动脚本
 
+# 颜色定义
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# 通知函数
+send_notification() {
+    local summary="$1"
+    local body="$2"
+    local urgency="${3:-normal}"  # low, normal, critical，默认 normal
+    local icon="${4:-package}"    # 可选 icon，默认 package
+
+    # 使用notify-send发送桌面通知
+    if command -v notify-send >/dev/null 2>&1; then
+        local urgency_param=""
+        if [ -n "$urgency" ]; then
+            urgency_param="-u $urgency"
+        fi
+        notify-send $urgency_param -a "dde-project-downloader" -i "$icon" "$summary" "$body"
+    else
+        echo -e "${RED}[NOTIFY-ERROR]${NC} notify-send 未找到，无法发送桌面通知: $summary - $body"
+    fi
+}
+
 echo "[启动] 启动 Deepin 项目下载器..."
 
 # 检测系统发行版
@@ -37,6 +60,7 @@ install_dependencies() {
             sudo zypper install -y python3 git python3-tk
             ;;
         *)
+            send_notification "系统不兼容" "不支持的Linux发行版: $distro\n请手动安装依赖: python3, git, tkinter" "critical" "error"
             echo "[错误] 不支持的Linux发行版: $distro"
             echo "请手动安装以下依赖:"
             echo "  - python3"
@@ -71,6 +95,7 @@ if [ $? -ne 0 ]; then
     # 再次检查
     python3 -c "import tkinter" 2>/dev/null
     if [ $? -ne 0 ]; then
+        send_notification "依赖安装失败" "tkinter 安装失败，请手动安装\nUbuntu/Debian: sudo apt install python3-tk\nCentOS/RHEL: sudo yum install tkinter" "critical" "error"
         echo "[错误] tkinter 安装失败，请手动安装"
         echo "Ubuntu/Debian: sudo apt install python3-tk"
         echo "CentOS/RHEL: sudo yum install tkinter"
