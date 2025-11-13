@@ -1,3 +1,10 @@
+dfm-xmenu-plugins (1.4.5-1) unstable; urgency=medium
+
+  * chore: Update version to 1.4.5-1
+  * chore: update icons and fix comment formatting in install files
+
+ -- zhanghongyuan <zhanghongyuan@uniontech.com>  Thu, 13 Nov 2025 17:08:38 +0800
+
 dfm-xmenu-plugins (1.4.4-1) unstable; urgency=medium
 
   * chore: Update version to 1.4.4-1
