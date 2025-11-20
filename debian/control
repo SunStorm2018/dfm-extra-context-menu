@@ -71,7 +71,6 @@ Package: dfm-xmenu-changelog-update
 Architecture: all
 Depends: ${misc:Depends},
   git,
-  devscripts,
   dpkg-dev
 Description: ChangeLog upgrade context menu plugin for DDE File Manager
  Provides ChangeLog upgrade tool context menu option for automatically updating
@@ -112,10 +111,7 @@ Depends: ${misc:Depends},
   python3,
   python3-tk,
   dde-dconfig-editor,
-  devscripts,
   d-feet,
-  code,
-  qtcreator,
   zenity | kdialog
 Description: Integrated development tools menu plugin for DDE File Manager
  Provides a comprehensive integrated menu with all development tools including

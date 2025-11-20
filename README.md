@@ -194,7 +194,6 @@ dpkg-buildpackage -us -uc -b
 - `dpkg-dev`, `debhelper` - DEB 包构建
 - `python3`, `python3-tk` - Python 运行环境
 - `dde-dconfig-editor` - DDE 配置编辑器
-- `devscripts` - 开发脚本工具
 - `d-feet` - D-Bus 调试工具
 
 ## 贡献指南

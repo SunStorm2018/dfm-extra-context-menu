@@ -98,7 +98,7 @@ class DebianVersionUpdater:
         """检查系统依赖"""
         self.log_step("检查系统依赖...")
         
-        required_commands = ['git', 'dch', 'dpkg-parsechangelog']
+        required_commands = ['git', 'dpkg-parsechangelog']
         
         for cmd in required_commands:
             if not shutil.which(cmd):
