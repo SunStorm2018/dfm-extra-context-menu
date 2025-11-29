@@ -1277,14 +1277,24 @@ class DeepinProjectDownloader:
         self.hardware_var = tk.StringVar(value="检测中...")
         ttk.Label(self.system_info_content_frame, textvariable=self.hardware_var, foreground="orange").grid(row=0, column=1, padx=(0, 10), pady=(5, 2), sticky="w")
         
+        # CPU核数
+        ttk.Label(self.system_info_content_frame, text="CPU核数:").grid(row=1, column=0, padx=(10, 5), pady=2, sticky="w")
+        self.cpu_cores_var = tk.StringVar(value="检测中...")
+        ttk.Label(self.system_info_content_frame, textvariable=self.cpu_cores_var, foreground="orange").grid(row=1, column=1, padx=(0, 10), pady=2, sticky="w")
+        
+        # 系统基本信息
+        ttk.Label(self.system_info_content_frame, text="系统信息:").grid(row=2, column=0, padx=(10, 5), pady=2, sticky="w")
+        self.system_info_var = tk.StringVar(value="检测中...")
+        ttk.Label(self.system_info_content_frame, textvariable=self.system_info_var, foreground="orange").grid(row=2, column=1, padx=(0, 10), pady=2, sticky="w")
+        
         # 显示协议
-        ttk.Label(self.system_info_content_frame, text="显示协议:").grid(row=1, column=0, padx=(10, 5), pady=2, sticky="w")
+        ttk.Label(self.system_info_content_frame, text="显示协议:").grid(row=3, column=0, padx=(10, 5), pady=2, sticky="w")
         self.display_protocol_var = tk.StringVar(value="检测中...")
-        ttk.Label(self.system_info_content_frame, textvariable=self.display_protocol_var, foreground="orange").grid(row=1, column=1, padx=(0, 10), pady=2, sticky="w")
+        ttk.Label(self.system_info_content_frame, textvariable=self.display_protocol_var, foreground="orange").grid(row=3, column=1, padx=(0, 10), pady=2, sticky="w")
         
         # 刷新按钮
         ttk.Button(self.system_info_content_frame, text="刷新信息", command=self.refresh_system_info, style='Primary.TButton').grid(
-            row=0, column=2, rowspan=4, padx=(5, 10), pady=(5, 2)
+            row=0, column=2, rowspan=6, padx=(5, 10), pady=(5, 2)
         )
         
         # 产品信息区域（动态添加）
@@ -1592,6 +1602,14 @@ class DeepinProjectDownloader:
                 hardware_info = self.get_hardware_info()
                 self.hardware_var.set(hardware_info)
                 
+                # 获取CPU核数
+                cpu_cores_info = self.get_cpu_cores()
+                self.cpu_cores_var.set(cpu_cores_info)
+                
+                # 获取系统基本信息
+                system_info = self.get_system_basic_info()
+                self.system_info_var.set(system_info)
+                
                 # 获取显示协议
                 display_info = self.get_display_protocol()
                 self.display_protocol_var.set(display_info)
@@ -1692,6 +1710,53 @@ class DeepinProjectDownloader:
                     return "未知协议"
                 except Exception:
                     return "检测失败"
+        except Exception:
+            return "获取失败"
+
+    def get_cpu_cores(self):
+        """获取CPU核数信息"""
+        try:
+            # 使用nproc命令获取CPU核数
+            result = subprocess.run(['nproc'], capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                cores = result.stdout.strip()
+                return f"{cores} 核"
+            else:
+                # 备用方案：使用lscpu
+                result = subprocess.run(['lscpu'], capture_output=True, text=True, timeout=10)
+                if result.returncode == 0:
+                    for line in result.stdout.split('\n'):
+                        if line.startswith('CPU(s):'):
+                            cores = line.split(':')[1].strip()
+                            return f"{cores} 核"
+                return "获取失败"
+        except subprocess.TimeoutExpired:
+            return "检测超时"
+        except FileNotFoundError:
+            # 如果nproc不存在，尝试其他方法
+            try:
+                # 尝试从/proc/cpuinfo读取
+                with open('/proc/cpuinfo', 'r') as f:
+                    cores = sum(1 for line in f if line.startswith('processor'))
+                    return f"{cores} 核" if cores > 0 else "获取失败"
+            except:
+                return "获取失败"
+        except Exception:
+            return "获取失败"
+
+    def get_system_basic_info(self):
+        """获取系统基本信息"""
+        try:
+            # 使用uname -a命令获取系统信息
+            result = subprocess.run(['uname', '-a'], capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                return result.stdout.strip()
+            else:
+                return "获取失败"
+        except subprocess.TimeoutExpired:
+            return "检测超时"
+        except FileNotFoundError:
+            return "命令不存在"
         except Exception:
             return "获取失败"
 
@@ -1801,7 +1866,7 @@ class DeepinProjectDownloader:
                 row += 1
             
             # 更新刷新按钮的rowspan以覆盖所有行
-            total_rows = row - self.product_info_start_row + 4  # 包含基本信息的4行
+            total_rows = row - self.product_info_start_row + 6  # 包含基本信息的6行（机型、CPU、系统信息、显示协议）
             refresh_btn = None
             for child in self.system_info_content_frame.winfo_children():
                 if isinstance(child, ttk.Button) and child['text'] == '刷新信息':
