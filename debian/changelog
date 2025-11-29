@@ -1,3 +1,10 @@
+dfm-xmenu-plugins (1.4.7-1) unstable; urgency=medium
+
+  * chore: Update version to 1.4.7-1
+  * feat(ui): add CPU cores and system information display
+
+ -- zhanghongyuan <zhanghongyuan@uniontech.com>  Sat, 29 Nov 2025 22:11:06 +0800
+
 dfm-xmenu-plugins (1.4.6-1) unstable; urgency=medium
 
   * chore: Update version to 1.4.6-1
