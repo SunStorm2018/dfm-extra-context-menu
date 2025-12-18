@@ -11,7 +11,7 @@ Actions=deb-builder;gitk;deepin-project-downloader;dde-dconfig-editor;d-feet
 [Desktop Action deb-builder]
 Name=DEB Package Builder
 Name[zh_CN]=构建DEB包
-Exec=/usr/bin/quick-build-deb.sh %p
+Exec=/usr/bin/deb-builder-launcher.sh %p
 Icon=/usr/share/dfm-xmenu-plugins/deb-package-icon.svg
 
 [Desktop Action gitk]
@@ -23,7 +23,7 @@ Icon=/usr/share/dfm-xmenu-plugins/gitk-icon.svg
 [Desktop Action deepin-project-downloader]
 Name=Deepin Project Downloader
 Name[zh_CN]=Deepin项目下载器
-Exec=/usr/bin/dde-project-downloader.sh %p
+Exec=/usr/bin/deepin-project-downloader-launcher.sh %p
 Icon=/usr/share/dfm-xmenu-plugins/deepin-project-downloader.svg
 
 [Desktop Action dde-dconfig-editor]

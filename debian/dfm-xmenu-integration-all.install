@@ -3,7 +3,7 @@ integration-all/integration-all.desktop usr/share/deepin/dde-file-manager/oem-me
 integration-all/integration.svg usr/share/dfm-xmenu-plugins
 
 # build-deb
-build-deb/quick-build-deb.sh usr/bin
+build-deb/deb-builder-launcher.sh usr/bin
 build-deb/deb-package-icon.svg usr/share/dfm-xmenu-plugins
 
 # gitk
@@ -11,7 +11,7 @@ cat-gitk/gitk-launcher.sh usr/bin
 cat-gitk/gitk-icon.svg usr/share/dfm-xmenu-plugins
 
 # deepin-project-downloader
-deepin-project-downloader/dde-project-downloader.sh usr/bin
+deepin-project-downloader/deepin-project-downloader-launcher.sh usr/bin
 deepin-project-downloader/deepin-project-downloader.svg usr/share/dfm-xmenu-plugins
 deepin-project-downloader/deepin-project-downloader-backen.py usr/share/dfm-xmenu-plugins
 

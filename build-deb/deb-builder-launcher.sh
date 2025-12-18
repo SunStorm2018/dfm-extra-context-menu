@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 快速DEB包构建脚本
-# 使用方法: ./quick-build-deb.sh [源码目录]
+# 使用方法: ./deb-builder-launcher.sh [源码目录]
 
 set -e
 

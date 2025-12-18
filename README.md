@@ -1,7 +1,7 @@
 # DDE File Manager Extra Context Menu Plugins
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.4.4-blue.svg)](https://github.com/your-repo/dfm-xmenu-plugins)
+[![Version](https://img.shields.io/badge/version-1.4.4-blue.svg)](https://gitee.com/sunstom/dfm-extra-context-menu)
 
 为深度桌面环境（DDE）文件管理器提供额外上下文菜单插件的集合，增强开发者的工作效率。
 
@@ -81,7 +81,7 @@ dfm-xmenu-plugins/
 ├── LICENSE                    # MIT 许可证
 ├── README.md                  # 项目说明文档
 ├── build-deb/                 # DEB 包构建工具
-│   ├── quick-build-deb.sh     # 快速构建脚本
+│   ├── deb-builder-launcher.sh # 快速构建脚本
 │   ├── deb-builder.desktop    # DEB 构建器菜单项
 │   └── deb-package-icon.svg   # 图标文件
 ├── cat-gitk/                  # Gitk 集成
@@ -107,14 +107,14 @@ dfm-xmenu-plugins/
 ├── deepin-project-downloader/ # 项目下载器
 │   ├── deepin-project-downloader.desktop
 │   ├── deepin-project-downloader-backen.py
-│   ├── dde-project-downloader.sh
+│   ├── deepin-project-downloader-launcher.sh
 │   └── deepin-project-downloader.svg
 ├── integration-all/           # 集成菜单
 │   ├── integration-all.desktop
 │   └── integration.svg
 ├── debian-changelog/          # 更新日志工具
 │   ├── changelog-update.desktop
-│   ├── changelog-update-launcher.sh
+│   ├── changelog-updater-launcher.sh
 │   ├── debian_version_gui.py
 │   ├── debian_version_update.py
 │   └── update-changelog.svg
@@ -138,13 +138,13 @@ dfm-xmenu-plugins/
 
 1. 克隆项目
 ```bash
-git clone https://github.com/your-repo/dfm-xmenu-plugins.git
+git clone https://gitee.com/sunstom/dfm-extra-context-menu.git
 cd dfm-xmenu-plugins
 ```
 
 2. 使用快速构建脚本
 ```bash
-./build-deb/quick-build-deb.sh
+./build-deb/deb-builder-launcher.sh
 ```
 
 3. 或使用标准 Debian 构建流程
@@ -157,27 +157,32 @@ dpkg-buildpackage -us -uc -b
 快速构建脚本支持多种选项：
 ```bash
 # 使用所有 CPU 核心（默认）
-./build-deb/quick-build-deb.sh
+./build-deb/deb-builder-launcher.sh
 
 # 使用一半 CPU 核心
-./build-deb/quick-build-deb.sh . yes half
+./build-deb/deb-builder-launcher.sh . yes half
 
 # 指定并行任务数
-./build-deb/quick-build-deb.sh . yes 8
+./build-deb/deb-builder-launcher.sh . yes 8
 
 # 构建后不清理缓存
-./build-deb/quick-build-deb.sh . no
+./build-deb/deb-builder-launcher.sh . no
 ```
 
 ## 版本历史
 
+- **v1.4.7** (2025-11-29) - 添加 CPU 核心和系统信息显示功能
+- **v1.4.6** (2025-11-20) - 移除不必要的依赖项
+- **v1.4.5** (2025-11-13) - 更新图标和修复安装文件中的注释格式
 - **v1.4.4** (2025-11-12) - 添加 Visual Studio Code 和 Qt Creator 插件，统一通知系统
+- **v1.4.3** (2025-11-11) - 添加独立插件包和自动化菜单集成
+- **v1.4.2** (2025-11-11) - 添加项目文档，增强并行构建选项和自动构建缓存清理
 - **v1.4.1** (2025-11-07) - 添加媒体调试器仓库链接
-- **v1.4** (2025-11-04) - 重命名包名为 dfm-xmenu-* 模式
-- **v1.3** (2025-10-31) - 添加 D-Feet D-Bus 调试器，改进包配置
-- **v1.2** (2025-10-30) - 添加 D-Feet 集成
+- **v1.4** (2025-11-04) - 重命名包名为 dfm-xmenu-* 模式，更新安装路径
+- **v1.3** (2025-10-31) - 添加 D-Feet D-Bus 调试器，改进包配置，模块化 Debian 包结构
+- **v1.2** (2025-10-30) - 添加 D-Feet D-Bus 调试器集成
 - **v1.1** (2025-10-27) - 添加 Deepin 项目下载器
-- **v1.0** (2025-10-27) - 初始版本发布
+- **v1.0** (2025-10-27) - 初始版本发布，包含 Gitk、Git Cola 和 DEB 包构建工具
 
 ## 依赖关系
 
@@ -222,6 +227,6 @@ dpkg-buildpackage -us -uc -b
 
 ## 链接
 
-- [项目主页](https://github.com/your-repo/dfm-xmenu-plugins)
-- [问题反馈](https://github.com/your-repo/dfm-xmenu-plugins/issues)
+- [项目主页](hhttps://gitee.com/sunstom/dfm-extra-context-menu)
+- [问题反馈](https://gitee.com/sunstom/dfm-extra-context-menu/issues)
 - [深度桌面环境](https://www.deepin.org/)

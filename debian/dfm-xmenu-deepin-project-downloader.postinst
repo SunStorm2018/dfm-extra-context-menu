@@ -111,7 +111,7 @@ def main():
                 f'[Desktop Action {plugin_action}]\n',
                 f'Name={plugin_action}\n',
                 f'Name[zh_CN]={plugin_action}\n',
-                f'Exec=/usr/bin/dde-project-downloader.sh %p\n',
+                f'Exec=/usr/bin/deepin-project-downloader-launcher.sh %p\n',
                 f'Icon=/usr/share/dfm-xmenu-plugins/deepin-project-downloader.svg\n'
             ]
             lines.extend(plugin_config)
