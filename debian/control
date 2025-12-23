@@ -18,7 +18,8 @@ Depends: ${misc:Depends},
   dfm-xmenu-changelog-update,
   dfm-xmenu-d-feet,
   dfm-xmenu-vscode,
-  dfm-xmenu-qtcreator
+  dfm-xmenu-qtcreator,
+  dfm-xmenu-deb-saver
 Description: Meta package for DDE File Manager extra context menu plugins
  This is a meta package that depends on all individual context menu plugins
  for Deepin Desktop Environment (DDE) File Manager.
@@ -98,8 +99,17 @@ Depends: ${misc:Depends},
   qtcreator,
   zenity | kdialog
 Description: Qt Creator context menu plugin for DDE File Manager
-  Provides Qt Creator launcher context menu option for opening Qt projects
-  with automatic detection of qmake and CMake project types in DDE File Manager.
+ Provides Qt Creator launcher context menu option for opening Qt projects
+ with automatic detection of qmake and CMake project types in DDE File Manager.
+
+Package: dfm-xmenu-deb-saver
+Architecture: all
+Depends: ${misc:Depends},
+  python3,
+  python3-tk
+Description: DEB Package Saver context menu plugin for DDE File Manager
+ Provides DEB Package Saver tool context menu option for downloading
+ and managing DEB packages from various sources in DDE File Manager.
 
 Package: dfm-xmenu-integration-all
 Architecture: all
@@ -115,4 +125,6 @@ Depends: ${misc:Depends},
   zenity | kdialog
 Description: Integrated development tools menu plugin for DDE File Manager
  Provides a comprehensive integrated menu with all development tools including
- DEB builder, Gitk, Git Cola, Deepin Project Downloader, DDE DConfig Editor, ChangeLog Upgrade, D-Feet D-Bus debugger, Visual Studio Code, and Qt Creator in DDE File Manager.
+ DEB builder, Gitk, Git Cola, Deepin Project Downloader, DDE DConfig Editor,
+ ChangeLog Upgrade, D-Feet D-Bus debugger, Visual Studio Code, Qt Creator,
+ and DEB Package Saver in DDE File Manager.

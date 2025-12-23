@@ -1,7 +1,7 @@
 # DDE File Manager Extra Context Menu Plugins
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.4.4-blue.svg)](https://gitee.com/sunstom/dfm-extra-context-menu)
+[![Version](https://img.shields.io/badge/version-1.4.7-blue.svg)](https://gitee.com/sunstom/dfm-extra-context-menu)
 
 为深度桌面环境（DDE）文件管理器提供额外上下文菜单插件的集合，增强开发者的工作效率。
 
@@ -14,6 +14,7 @@
 ### 🛠️ 开发工具集成
 
 - **DEB 包构建器** - 快速构建 Debian 软件包
+- **DEB 包保存器** - 从各种来源下载和管理 DEB 包，支持网络和本地源
 - **Gitk** - Git 仓库历史可视化工具
 - **Git Cola** - 图形化 Git 操作界面
 - **Visual Studio Code** - 跨平台代码编辑器，智能检测工程目录
@@ -42,8 +43,8 @@ sudo apt install dfm-xmenu-plugins
 ### 单独安装插件
 
 ```bash
-# DEB 包构建器
-sudo apt install dfm-xmenu-deb-builder
+# DEB 包工具
+sudo apt install dfm-xmenu-deb-builder dfm-xmenu-deb-saver
 
 # Git 工具
 sudo apt install dfm-xmenu-gitk dfm-xmenu-git-cola
@@ -84,6 +85,11 @@ dfm-xmenu-plugins/
 │   ├── deb-builder-launcher.sh # 快速构建脚本
 │   ├── deb-builder.desktop    # DEB 构建器菜单项
 │   └── deb-package-icon.svg   # 图标文件
+├── deb-saver/                 # DEB 包保存器
+│   ├── deb-saver.desktop      # DEB 保存器菜单项
+│   ├── deb-saver-launcher.sh  # DEB 保存器启动脚本
+│   ├── deb-saver.py           # DEB 保存器主程序
+│   └── deb-saver-icon.svg     # 图标文件
 ├── cat-gitk/                  # Gitk 集成
 │   ├── gitk.desktop           # Gitk 菜单项
 │   ├── gitk-launcher.sh       # Gitk 启动脚本
@@ -171,7 +177,7 @@ dpkg-buildpackage -us -uc -b
 
 ## 版本历史
 
-- **v1.4.7** (2025-11-29) - 添加 CPU 核心和系统信息显示功能
+- **v1.4.7** (2025-11-29) - 添加 CPU 核心和系统信息显示功能，新增 DEB 包保存器插件
 - **v1.4.6** (2025-11-20) - 移除不必要的依赖项
 - **v1.4.5** (2025-11-13) - 更新图标和修复安装文件中的注释格式
 - **v1.4.4** (2025-11-12) - 添加 Visual Studio Code 和 Qt Creator 插件，统一通知系统
@@ -197,7 +203,7 @@ dpkg-buildpackage -us -uc -b
 - `qtcreator` - Qt Creator IDE
 - `zenity | kdialog` - 图形对话框支持
 - `dpkg-dev`, `debhelper` - DEB 包构建
-- `python3`, `python3-tk` - Python 运行环境
+- `python3`, `python3-tk` - Python 运行环境（DEB 保存器依赖）
 - `dde-dconfig-editor` - DDE 配置编辑器
 - `d-feet` - D-Bus 调试工具
 

@@ -1,0 +1,5 @@
+# DEB Saver plugin files
+deb-saver/deb-saver.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
+deb-saver/deb-saver-launcher.sh usr/bin
+deb-saver/deb-saver.py usr/share/dfm-xmenu-plugins
+deb-saver/deb-saver-icon.svg usr/share/dfm-xmenu-plugins
