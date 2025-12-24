@@ -84,14 +84,30 @@ clean_build_cache() {
 # 显示构建产物路径
 show_built_packages() {
     local source_dir="$1"
-    local deb_files=$(ls -1 ../*.deb 2>/dev/null || true)
+    local project_name=""
     
-    if [ -n "$deb_files" ]; then
+    # 尝试从源码目录名获取项目名
+    project_name=$(basename "$source_dir")
+    
+    # 如果源码目录是当前目录，尝试从debian/control文件获取项目名
+    if [ "$project_name" = "." ]; then
+        project_name=$(basename "$(pwd)")
+    fi
+    
+    # 获取当前构建产生的deb包（通过时间戳筛选最近5分钟内创建的包）
+    local recent_debs=$(find .. -maxdepth 1 -name "*.deb" -mmin -5 2>/dev/null || true)
+    
+    # 如果没有找到最近的包，则尝试通过项目名筛选
+    if [ -z "$recent_debs" ]; then
+        recent_debs=$(find .. -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-xmenu-*.deb" 2>/dev/null || true)
+    fi
+    
+    if [ -n "$recent_debs" ]; then
         log "构建产物:"
-        ls -la ../*.deb
-        echo "$deb_files"
+        ls -la $recent_debs
+        echo "$recent_debs"
     else
-        error "未找到构建产物"
+        error "未找到当前项目的构建产物"
     fi
 }
 
@@ -182,13 +198,24 @@ main() {
         # 显示构建产物
         show_built_packages "$source_dir"
         
-        # 发送成功通知
-        local deb_files=$(ls -1 ../*.deb 2>/dev/null | head -1)
-        if [ -n "$deb_files" ]; then
-            local deb_name=$(basename "$deb_files")
+        # 发送成功通知 - 只获取当前项目的包
+        local project_name=""
+        project_name=$(basename "$source_dir")
+        if [ "$project_name" = "." ]; then
+            project_name=$(basename "$(pwd)")
+        fi
+        
+        # 获取当前构建产生的deb包
+        local recent_debs=$(find .. -maxdepth 1 -name "*.deb" -mmin -5 2>/dev/null || true)
+        if [ -z "$recent_debs" ]; then
+            recent_debs=$(find .. -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-xmenu-*.deb" 2>/dev/null | head -1 || true)
+        fi
+        
+        if [ -n "$recent_debs" ]; then
+            local deb_name=$(basename "$recent_debs")
             send_notification "DEB包构建完成" "成功构建: $deb_name" "normal"
         else
-            send_notification "DEB包构建完成" "构建成功，但未找到构建产物" "normal"
+            send_notification "DEB包构建完成" "构建成功，但未找到当前项目的构建产物" "normal"
         fi
         
     else
