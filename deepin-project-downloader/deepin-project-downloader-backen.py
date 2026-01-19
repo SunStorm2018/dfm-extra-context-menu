@@ -166,123 +166,123 @@ class DeepinProjectDownloader:
         # 项目仓库URL配置
         self.project_repos = {
             "deepin-screen-recorder": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-screen-recorder.git",
+                "gitee": "https://gitee.com/deepin-community/deepin-screen-recorder.git",
                 "github": "https://github.com/linuxdeepin/deepin-screen-recorder.git"
             },
             "deepin-devicemanager": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-devicemanager.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-devicemanager.git", 
                 "github": "https://github.com/linuxdeepin/deepin-devicemanager.git"
             },
             "deepin-movie-reborn": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-movie-reborn.git",
+                "gitee": "https://gitee.com/deepin-community/deepin-movie-reborn.git",
                 "github": "https://github.com/linuxdeepin/deepin-movie-reborn.git"
             },
             "deepin-camera": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-camera.git",
+                "gitee": "https://gitee.com/deepin-community/deepin-camera.git",
                 "github": "https://github.com/linuxdeepin/deepin-camera.git"
             },
             "deepin-editor": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-editor.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-editor.git", 
                 "github": "https://github.com/linuxdeepin/deepin-editor.git"
             },
             "deepin-music": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-music.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-music.git", 
                 "github": "https://github.com/linuxdeepin/deepin-music.git"
             },
             "deepin-voice-note": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-voice-note.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-voice-note.git", 
                 "github": "https://github.com/linuxdeepin/deepin-voice-note.git"
             },
             "deepin-compressor": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-compressor.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-compressor.git", 
                 "github": "https://github.com/linuxdeepin/deepin-compressor.git"
             }, 
             "deepin-manual": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-manual.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-manual.git", 
                 "github": "https://github.com/linuxdeepin/deepin-manual.git"
             },           
             "deepin-ocr": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-ocr.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-ocr.git", 
                 "github": "https://github.com/linuxdeepin/deepin-ocr.git"
             },           
             "deepin-pdfium": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-pdfium.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-pdfium.git", 
                 "github": "https://github.com/linuxdeepin/deepin-pdfium.git"
             },        
             "deepin-picker": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-picker.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-picker.git", 
                 "github": "https://github.com/linuxdeepin/deepin-picker.git"
             },           
             "deepin-scanner": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-scanner.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-scanner.git", 
                 "github": "https://github.com/linuxdeepin/deepin-scanner.git"
             },
             "deepin-reader": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-reader.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-reader.git", 
                 "github": "https://github.com/linuxdeepin/deepin-reader.git"
             },
             "dde-device-formatter": {
-                "gitee": "https://gitee.com/linuxdeepin/dde-device-formatter.git", 
+                "gitee": "https://gitee.com/deepin-community/dde-device-formatter.git", 
                 "github": "https://github.com/linuxdeepin/dde-device-formatter.git"
             },
             "deepin-draw": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-draw.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-draw.git", 
                 "github": "https://github.com/linuxdeepin/deepin-draw.git"
             },
             "deepin-log-viewer": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-log-viewer.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-log-viewer.git", 
                 "github": "https://github.com/linuxdeepin/deepin-log-viewer.git"
             },
             "deepin-terminal": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-terminal.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-terminal.git", 
                 "github": "https://github.com/linuxdeepin/deepin-terminal.git"
             },
             "deepin-system-monitor": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-system-monitor.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-system-monitor.git", 
                 "github": "https://github.com/linuxdeepin/deepin-system-monitor.git"
             },
             "deepin-downloader": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-downloader.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-downloader.git", 
                 "github": "https://github.com/linuxdeepin/deepin-downloader.git"
             },
             "deepin-image-viewer": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-image-viewer.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-image-viewer.git", 
                 "github": "https://github.com/linuxdeepin/deepin-image-viewer.git"
             },
             "image-editor": {
-                "gitee": "https://gitee.com/linuxdeepin/image-editor.git", 
+                "gitee": "https://gitee.com/deepin-community/image-editor.git", 
                 "github": "https://github.com/linuxdeepin/image-editor.git"
             },
             "deepin-font-manager": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-font-manager.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-font-manager.git", 
                 "github": "https://github.com/linuxdeepin/deepin-font-manager.git"
             },
             "deepin-deb-installer": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-deb-installer.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-deb-installer.git", 
                 "github": "https://github.com/linuxdeepin/deepin-deb-installer.git"
             },
             "deepin-diskmanager": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-diskmanager.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-diskmanager.git", 
                 "github": "https://github.com/linuxdeepin/deepin-diskmanager.git"
             },
             "deepin-album": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-album.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-album.git", 
                 "github": "https://github.com/linuxdeepin/deepin-album.git"
             },
             "dde-cooperation": {
-                "gitee": "https://gitee.com/linuxdeepin/dde-cooperation.git", 
+                "gitee": "https://gitee.com/deepin-community/dde-cooperation.git", 
                 "github": "https://github.com/linuxdeepin/dde-cooperation.git"
             },
             "dde-grand-search": {
-                "gitee": "https://gitee.com/linuxdeepin/dde-grand-search.git", 
+                "gitee": "https://gitee.com/deepin-community/dde-grand-search.git", 
                 "github": "https://github.com/linuxdeepin/dde-grand-search.git"
             },
             "dde-file-manager": {
-                "gitee": "https://gitee.com/linuxdeepin/dde-file-manager.git", 
+                "gitee": "https://gitee.com/deepin-community/dde-file-manager.git", 
                 "github": "https://github.com/linuxdeepin/dde-file-manager.git"
             },
             "deepin-calculator": {
-                "gitee": "https://gitee.com/linuxdeepin/deepin-calculator.git", 
+                "gitee": "https://gitee.com/deepin-community/deepin-calculator.git", 
                 "github": "https://github.com/linuxdeepin/deepin-calculator.git"
             },
             "media-debuger": {
