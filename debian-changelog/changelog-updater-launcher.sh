@@ -67,9 +67,9 @@ echo "项目目录: $(pwd)"
 echo
 
 # 执行debian-version-update.sh脚本
-# 注意：安装后脚本路径为 /usr/share/dfm-xmenu-plugins/debian_version_update.py
-if [ -f "/usr/share/dfm-xmenu-plugins/debian_version_update.py" ]; then
-    exec python3 "/usr/share/dfm-xmenu-plugins/debian_version_update.py" "$@"
+# 注意：安装后脚本路径为 /usr/share/dfm-tools-plugins/debian_version_update.py
+if [ -f "/usr/share/dfm-tools-plugins/debian_version_update.py" ]; then
+    exec python3 "/usr/share/dfm-tools-plugins/debian_version_update.py" "$@"
 else
     # 开发环境下的路径
     exec "$(dirname "$0")/debian-version-update.sh" "$@"

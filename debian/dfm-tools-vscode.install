@@ -1,4 +1,4 @@
 # VSCode plugin files
 # vscode/vscode.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
 vscode/vscode-launcher.sh usr/bin
-vscode/vscode-icon.svg usr/share/dfm-xmenu-plugins
+vscode/vscode-icon.svg usr/share/dfm-tools-plugins

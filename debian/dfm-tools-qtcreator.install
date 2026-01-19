@@ -1,4 +1,4 @@
 # Qt Creator plugin files
 # qtcreator/qtcreator.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
 qtcreator/qtcreator-launcher.sh usr/bin
-qtcreator/qtcreator-icon.svg usr/share/dfm-xmenu-plugins
+qtcreator/qtcreator-icon.svg usr/share/dfm-tools-plugins

@@ -71,7 +71,7 @@ clean_build_cache() {
     # 额外清理debian构建目录
     log "清理debian构建目录..."
     rm -rf debian/.debhelper/
-    rm -rf debian/dfm-xmenu-*/
+    rm -rf debian/dfm-tools-*/
     rm -f debian/files debian/debhelper-build-stamp
     rm -f debian/*.log debian/*.substvars
     
@@ -99,7 +99,7 @@ show_built_packages() {
     
     # 如果没有找到最近的包，则尝试通过项目名筛选
     if [ -z "$recent_debs" ]; then
-        recent_debs=$(find .. -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-xmenu-*.deb" 2>/dev/null || true)
+        recent_debs=$(find .. -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-tools-*.deb" 2>/dev/null || true)
     fi
     
     if [ -n "$recent_debs" ]; then
@@ -208,7 +208,7 @@ main() {
         # 获取当前构建产生的deb包
         local recent_debs=$(find .. -maxdepth 1 -name "*.deb" -mmin -5 2>/dev/null || true)
         if [ -z "$recent_debs" ]; then
-            recent_debs=$(find .. -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-xmenu-*.deb" 2>/dev/null | head -1 || true)
+            recent_debs=$(find .. -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-tools-*.deb" 2>/dev/null | head -1 || true)
         fi
         
         if [ -n "$recent_debs" ]; then

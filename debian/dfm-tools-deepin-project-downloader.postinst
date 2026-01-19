@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 """
-Post-installation script for dfm-xmenu-gitk package
-This script will update integration-all.desktop to include the gitk plugin
+Post-installation script for dfm-tools-deepin-project-downloader package
+This script will update integration-all.desktop to include the deepin-project-downloader plugin
 """
 
 import os
@@ -13,7 +13,7 @@ import tempfile
 def print_header():
     """打印美化的标题"""
     print("=" * 60)
-    print("DFM Gitk 插件安装程序")
+    print("DFM Deepin 项目下载器插件安装程序")
     print("=" * 60)
 
 def print_success(message):
@@ -34,13 +34,13 @@ def main():
     integration_desktop = "/usr/share/deepin/dde-file-manager/oem-menuextensions/integration-all.desktop"
     # 从脚本文件名中提取插件名称
     script_name = os.path.basename(sys.argv[0])
-    plugin_name = script_name.replace('dfm-xmenu-', '').replace('.postinst', '')
-    plugin_action = script_name.replace('dfm-xmenu-', '').replace('.postinst', '')
+    plugin_name = script_name.replace('dfm-tools-', '').replace('.postinst', '')
+    plugin_action = script_name.replace('dfm-tools-', '').replace('.postinst', '')
     
     # 检查 integration-all.desktop 文件是否存在
     if not os.path.exists(integration_desktop):
         print_warning(f"找不到 {integration_desktop} 文件")
-        print_info("请确保已安装 dfm-xmenu-integration-all 包")
+        print_info("请确保已安装 dfm-tools-integration-all 包")
         return 0
     
     print_info(f"正在安装/更新{plugin_name}到集成菜单...")
@@ -111,8 +111,8 @@ def main():
                 f'[Desktop Action {plugin_action}]\n',
                 f'Name={plugin_action}\n',
                 f'Name[zh_CN]={plugin_action}\n',
-                f'Exec=/usr/bin/{plugin_action}-launcher.sh %p\n',
-                f'Icon=/usr/share/dfm-xmenu-plugins/{plugin_action}-icon.svg\n'
+                f'Exec=/usr/bin/deepin-project-downloader-launcher.sh %p\n',
+                f'Icon=/usr/share/dfm-tools-plugins/deepin-project-downloader.svg\n'
             ]
             lines.extend(plugin_config)
         

@@ -1,3 +1,10 @@
+dfm-tools-plugins (1.5.0-1) unstable; urgency=medium
+
+  * chore: Update version to 1.4.9-1
+  * refactor: rename packages from dfm-xmenu to dfm-tools
+
+ -- zhanghongyuan <zhanghongyuan@uniontech.com>  Mon, 19 Jan 2026 18:14:25 +0800
+
 dfm-xmenu-plugins (1.4.9-1) unstable; urgency=medium
 
   * chore: Update version to 1.4.9-1

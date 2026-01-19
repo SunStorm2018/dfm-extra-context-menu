@@ -101,8 +101,8 @@ echo "[成功] 环境检查完成"
 
 # 运行Python应用
 # 检查是否在安装路径下运行
-if [ -f /usr/share/dfm-xmenu-plugins/deb-saver.py ]; then
-    python3 /usr/share/dfm-xmenu-plugins/deb-saver.py
+if [ -f /usr/share/dfm-tools-plugins/deb-saver.py ]; then
+    python3 /usr/share/dfm-tools-plugins/deb-saver.py
 else
     python3 deb-saver.py
 fi

@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 """
-Pre-removal script for dfm-xmenu-d-feet package
-This script will remove d-feet plugin from integration-all.desktop
+Pre-removal script for dfm-tools-dde-dconfig-editor package
+This script will remove dde-dconfig-editor plugin from integration-all.desktop
 """
 
 import os
@@ -13,7 +13,7 @@ import tempfile
 def print_header():
     """打印美化的标题"""
     print("=" * 60)
-    print("DFM D-Feet 插件卸载程序")
+    print("DFM DDE DConfig 编辑器插件卸载程序")
     print("=" * 60)
 
 def print_success(message):
@@ -34,8 +34,8 @@ def main():
     integration_desktop = "/usr/share/deepin/dde-file-manager/oem-menuextensions/integration-all.desktop"
     # 从脚本文件名中提取插件名称
     script_name = os.path.basename(sys.argv[0])
-    plugin_name = script_name.replace('dfm-xmenu-', '').replace('.prerm', '')
-    plugin_action = script_name.replace('dfm-xmenu-', '').replace('.prerm', '')
+    plugin_name = script_name.replace('dfm-tools-', '').replace('.prerm', '')
+    plugin_action = script_name.replace('dfm-tools-', '').replace('.prerm', '')
     
     # 检查 integration-all.desktop 文件是否存在
     if not os.path.exists(integration_desktop):

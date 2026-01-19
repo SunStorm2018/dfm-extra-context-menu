@@ -1,0 +1,22 @@
+# Integration All plugin files - combines all development tools
+integration-all/integration-all.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
+integration-all/integration.svg usr/share/dfm-tools-plugins
+
+# build-deb
+build-deb/deb-builder-launcher.sh usr/bin
+build-deb/deb-package-icon.svg usr/share/dfm-tools-plugins
+
+# gitk
+cat-gitk/gitk-launcher.sh usr/bin
+cat-gitk/gitk-icon.svg usr/share/dfm-tools-plugins
+
+# deepin-project-downloader
+deepin-project-downloader/deepin-project-downloader-launcher.sh usr/bin
+deepin-project-downloader/deepin-project-downloader.svg usr/share/dfm-tools-plugins
+deepin-project-downloader/deepin-project-downloader-backen.py usr/share/dfm-tools-plugins
+
+# dde-dconfig-editor
+dde-dconfig-editor/dde-dconfig-editor.svg usr/share/dfm-tools-plugins
+
+# d-feet
+d-feet/d-feet.svg usr/share/dfm-tools-plugins

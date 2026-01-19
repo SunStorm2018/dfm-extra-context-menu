@@ -1,4 +1,4 @@
 # Gitk plugin files
 cat-gitk/gitk.desktop usr/share/deepin/dde-file-manager/oem-menuextensions
 cat-gitk/gitk-launcher.sh usr/bin
-cat-gitk/gitk-icon.svg usr/share/dfm-xmenu-plugins
+cat-gitk/gitk-icon.svg usr/share/dfm-tools-plugins

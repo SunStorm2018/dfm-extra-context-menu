@@ -1,8 +1,5 @@
 #!/usr/bin/make -f
 
-# 确保并行构建选项被正确传递
-# DEB_BUILD_OPTIONS 中的 parallel=N 会被 dh 自动处理
-
 %:
 	dh $@
 
@@ -17,7 +14,7 @@ override_dh_auto_install:
 	dh_install
 
 override_dh_auto_test:
-	# 跳过测试，因为这是一个纯数据包
+	# No test
 
 override_dh:
 	dh $@ --parallel
