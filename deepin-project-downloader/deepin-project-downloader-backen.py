@@ -114,8 +114,17 @@ class DeepinProjectDownloader:
         self.root.geometry("1200x1000")
         self.root.minsize(1000, 700)
         
+        # 设置高分屏支持
+        self.setup_dpi_scaling()
+        
         # 设置主题样式
         self.setup_styles()
+        
+        # 初始化缓存目录和时间戳
+        self.cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "deepin-project-downloader")
+        self.cache_file = os.path.join(self.cache_dir, "last_update.json")
+        self.update_interval_days = 3  # 更新间隔：3天
+        self.init_cache_directory()
         
         # 注册程序退出时的清理函数（移除自动清理）
         # self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -391,6 +400,11 @@ class DeepinProjectDownloader:
             }
         }
         
+        # 搜索过滤变量
+        self.search_var = tk.StringVar()
+        self.search_var.trace_add("write", self.filter_projects)
+        self.filtered_projects = list(self.project_repos.keys())
+        
         # 软件包列表
         self.packages = {
             "gdb": "GUN调试工具",
@@ -446,6 +460,110 @@ class DeepinProjectDownloader:
         # 延迟加载软件源文件（确保日志组件已创建）
         self.root.after(200, self.load_sources_files)
     
+    def setup_dpi_scaling(self):
+        """设置高分屏缩放支持"""
+        try:
+            # 获取系统DPI缩放比例
+            scale_factor = self.root.tk.call('tk', 'scaling')
+            
+            # 在Linux系统上，尝试从环境变量获取DPI信息
+            if sys.platform == "linux":
+                import os
+                # 检查GDK_SCALE环境变量（GNOME）
+                gdk_scale = os.environ.get('GDK_SCALE')
+                if gdk_scale:
+                    scale_factor = float(gdk_scale)
+                else:
+                    # 检查QT_SCALE_FACTOR（Qt应用）
+                    qt_scale = os.environ.get('QT_SCALE_FACTOR')
+                    if qt_scale:
+                        scale_factor = float(qt_scale)
+                
+                # 如果系统设置了高DPI，使用更高的缩放比例
+                if scale_factor <= 1.0:
+                    # 尝试从Xft.dpi获取DPI信息
+                    try:
+                        result = subprocess.run(['xrdb', '-query'], capture_output=True, text=True, timeout=5)
+                        if result.returncode == 0:
+                            for line in result.stdout.split('\n'):
+                                if 'Xft.dpi:' in line:
+                                    dpi = float(line.split(':')[1].strip())
+                                    if dpi > 96:  # 标准DPI是96
+                                        scale_factor = dpi / 96
+                                    break
+                    except:
+                        pass
+            
+            # 应用缩放比例（最小1.0，最大2.5）
+            scale_factor = max(1.0, min(scale_factor, 2.5))
+            self.root.tk.call('tk', 'scaling', scale_factor)
+            
+            self.log_message(f"[系统] DPI缩放比例设置为: {scale_factor:.2f}")
+            
+        except Exception as e:
+            # 如果设置失败，使用默认值
+            self.log_message(f"[系统] DPI缩放设置失败，使用默认值: {str(e)}")
+    
+    def init_cache_directory(self):
+        """初始化缓存目录"""
+        try:
+            # 创建缓存目录
+            os.makedirs(self.cache_dir, exist_ok=True)
+            self.log_message(f"[缓存] 缓存目录已创建: {self.cache_dir}")
+            
+            # 检查缓存文件是否存在
+            if os.path.exists(self.cache_file):
+                with open(self.cache_file, 'r', encoding='utf-8') as f:
+                    cache_data = json.load(f)
+                    last_update = cache_data.get('last_update', 0)
+                    self.log_message(f"[缓存] 上次更新时间: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(last_update))}")
+            else:
+                self.log_message("[缓存] 缓存文件不存在，将创建新的缓存文件")
+                
+        except Exception as e:
+            self.log_message(f"[缓存] 初始化缓存目录失败: {str(e)}")
+    
+    def should_update_repos(self):
+        """检查是否需要更新项目仓库列表"""
+        try:
+            if not os.path.exists(self.cache_file):
+                self.log_message("[缓存] 缓存文件不存在，需要更新")
+                return True
+            
+            with open(self.cache_file, 'r', encoding='utf-8') as f:
+                cache_data = json.load(f)
+                last_update = cache_data.get('last_update', 0)
+            
+            current_time = time.time()
+            days_since_update = (current_time - last_update) / (24 * 60 * 60)
+            
+            if days_since_update >= self.update_interval_days:
+                self.log_message(f"[缓存] 距离上次更新已过 {days_since_update:.1f} 天，需要更新")
+                return True
+            else:
+                self.log_message(f"[缓存] 距离上次更新仅 {days_since_update:.1f} 天，无需更新")
+                return False
+                
+        except Exception as e:
+            self.log_message(f"[缓存] 检查更新状态失败: {str(e)}")
+            return True
+    
+    def update_cache_timestamp(self):
+        """更新缓存时间戳"""
+        try:
+            cache_data = {
+                'last_update': time.time(),
+                'update_time': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+            }
+            
+            with open(self.cache_file, 'w', encoding='utf-8') as f:
+                json.dump(cache_data, f, ensure_ascii=False, indent=2)
+            
+            self.log_message(f"[缓存] 已更新缓存时间戳: {cache_data['update_time']}")
+            
+        except Exception as e:
+            self.log_message(f"[缓存] 更新缓存时间戳失败: {str(e)}")
+    
     def setup_styles(self):
         """设置界面样式"""
         style = ttk.Style()
@@ -457,11 +575,11 @@ class DeepinProjectDownloader:
         style.configure('Info.TLabel', font=('Arial', 10), foreground='#7f8c8d')
         style.configure('Status.TLabel', font=('Arial', 10), foreground='orange')
         
-        # 按钮样式 - 使用协调的蓝色调配色
-        style.configure('Primary.TButton', font=('Arial', 10, 'bold'), background='#F8F8F8')
-        style.configure('Success.TButton', font=('Arial', 10, 'bold'), background='#E4E4E4')
-        style.configure('Warning.TButton', font=('Arial', 10, 'bold'), background='#E4E4E4')
-        style.configure('Danger.TButton', font=('Arial', 10, 'bold'), background='#d9534f')
+        # 按钮样式 - 调整为更紧凑的尺寸
+        style.configure('Primary.TButton', font=('Arial', 9, 'bold'), background='#F8F8F8', padding=(8, 4))
+        style.configure('Success.TButton', font=('Arial', 9, 'bold'), background='#E4E4E4', padding=(8, 4))
+        style.configure('Warning.TButton', font=('Arial', 9, 'bold'), background='#E4E4E4', padding=(8, 4))
+        style.configure('Danger.TButton', font=('Arial', 9, 'bold'), background='#d9534f', padding=(8, 4))
         
         # 框架样式
         style.configure('Card.TFrame', relief='solid', borderwidth=1, background='#ecf0f1')
@@ -525,19 +643,26 @@ class DeepinProjectDownloader:
         """自动查询分支并在完成后启用控件"""
         def query_and_enable_task():
             try:
-                # 先自动查询分支
-                self.auto_query_branches()
-                
-                # 等待查询完成（简单延迟，实际应该用更好的同步机制）
-                import time
-                time.sleep(3)
+                # 检查是否需要更新
+                if self.should_update_repos():
+                    # 先自动查询分支
+                    self.auto_query_branches()
+                    
+                    # 等待查询完成（简单延迟，实际应该用更好的同步机制）
+                    import time
+                    time.sleep(3)
+                    
+                    # 更新缓存时间戳
+                    self.update_cache_timestamp()
+                else:
+                    self.message_queue.put(("log", "[缓存] 距离上次更新未超过3天，跳过自动查询分支"))
                 
                 # 应用保存的分支配置
                 self.apply_saved_branches()
                 
                 # 启用控件
                 self.message_queue.put(("enable_controls", True))
-                self.message_queue.put(("log", "[完成] 分支查询和配置加载完成，界面已就绪"))
+                self.message_queue.put(("log", "[完成] 配置加载完成，界面已就绪"))
                 
             except Exception as e:
                 self.message_queue.put(("log", f"[错误] 自动查询和启用过程出错: {str(e)}"))
@@ -3628,11 +3753,102 @@ if {{[llength $result] >= 4}} {{
         for project_name in self.project_repos.keys():
             self.update_project_status(project_name)
     
+    def filter_projects(self, *args):
+        """过滤项目列表"""
+        search_text = self.search_var.get().strip().lower()
+        
+        if not search_text:
+            # 搜索框为空，显示所有项目
+            self.filtered_projects = list(self.project_repos.keys())
+        else:
+            # 根据项目名称过滤
+            self.filtered_projects = [
+                name for name in self.project_repos.keys()
+                if search_text in name.lower()
+            ]
+        
+        # 重新构建项目表格
+        self.refresh_project_table()
+    
+    def refresh_project_table(self):
+        """刷新项目表格显示"""
+        # 清空现有的项目行
+        if hasattr(self, 'project_content_frame'):
+            for widget in self.project_content_frame.winfo_children():
+                widget.destroy()
+        
+        # 重新创建项目行
+        row = 0
+        for project_name in self.filtered_projects:
+            # 选择框
+            cb = ttk.Checkbutton(self.project_content_frame, variable=self.project_vars[project_name])
+            cb.grid(row=row, column=0, padx=5, pady=2)
+            
+            # 项目名称
+            ttk.Label(self.project_content_frame, text=project_name, style='Info.TLabel').grid(
+                row=row, column=1, sticky="w", padx=5, pady=3)
+            
+            # 本地状态
+            exists = self.check_project_exists(project_name)
+            status_text = "已下载" if exists else "未下载"
+            status_color = "green" if exists else "red"
+            status_label = ttk.Label(self.project_content_frame, text=status_text, foreground=status_color)
+            status_label.grid(row=row, column=2, sticky="w", padx=5, pady=2)
+            self.project_status_labels[project_name] = status_label
+            
+            # 分支选择
+            branch_combo = ttk.Combobox(self.project_content_frame, textvariable=self.branch_vars[project_name],
+                                      values=("master",), state="readonly", width=20)
+            branch_combo.grid(row=row, column=3, sticky="ew", padx=5, pady=2)
+            branch_combo.bind('<<ComboboxSelected>>',
+                            lambda e, name=project_name: self.on_branch_changed(e, name))
+            self.branch_combos[project_name] = branch_combo
+            
+            # 进度条容器
+            progress_frame = ttk.Frame(self.project_content_frame)
+            progress_frame.grid(row=row, column=4, sticky="ew", padx=5, pady=2)
+            
+            # 创建进度条（初始隐藏）
+            progress_bar = ttk.Progressbar(progress_frame, mode='indeterminate', length=100)
+            progress_label = ttk.Label(progress_frame, text="", width=12)
+            
+            self.progress_bars[project_name] = {
+                'bar': progress_bar,
+                'label': progress_label
+            }
+            
+            # 操作按钮
+            action_frame = ttk.Frame(self.project_content_frame)
+            action_frame.grid(row=row, column=5, sticky="ew", padx=5, pady=2)
+            
+            ttk.Button(action_frame, text="目录", width=4, style='Primary.TButton',
+                      command=lambda name=project_name: self.open_project_dir(name)).pack(side=tk.LEFT, padx=1)
+            ttk.Button(action_frame, text="QtCreator打开", width=12, style='Primary.TButton',
+                      command=lambda name=project_name: self.open_project_with_qtcreator(name)).pack(side=tk.LEFT, padx=1)
+            ttk.Button(action_frame, text="删除", width=4, style='Danger.TButton',
+                      command=lambda name=project_name: self.delete_project_dir(name)).pack(side=tk.LEFT, padx=1)
+            ttk.Button(action_frame, text="打包", width=4, style='Success.TButton',
+                      command=lambda name=project_name: self.deb_packet_generate_dir(name)).pack(side=tk.LEFT, padx=1)
+            
+            row += 1
+    
     def create_project_table(self, parent):
         """创建项目表格"""
         # 创建主容器
         main_container = ttk.Frame(parent)
         main_container.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # 搜索框框架
+        search_frame = ttk.Frame(main_container)
+        search_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        # 搜索图标和输入框
+        ttk.Label(search_frame, text="Search", font=('Arial', 12)).pack(side=tk.LEFT, padx=(5, 5))
+        search_entry = ttk.Entry(search_frame, textvariable=self.search_var, font=('Arial', 10))
+        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        
+        # 搜索提示
+        ttk.Label(search_frame, text=f"共 {len(self.project_repos)} 个项目", foreground="gray").pack(side=tk.LEFT, padx=(5, 5))
         
         # 固定标题框架
         header_frame = ttk.Frame(main_container)
@@ -3663,68 +3879,19 @@ if {{[llength $result] >= 4}} {{
         # 获取内容框架
         content_frame = content_scroll.get_frame()
         content_frame.columnconfigure(0, weight=1, minsize=80)   # 选择列
-        content_frame.columnconfigure(1, weight=3, minsize=200)  # 项目列  
+        content_frame.columnconfigure(1, weight=3, minsize=200)  # 项目列
         content_frame.columnconfigure(2, weight=2, minsize=100)  # 状态列
         content_frame.columnconfigure(3, weight=3, minsize=200)  # 分支列
         content_frame.columnconfigure(4, weight=2, minsize=150)  # 进度列
         content_frame.columnconfigure(5, weight=2, minsize=120)  # 操作列
         
-        # 项目行
+        # 保存内容框架引用用于刷新
+        self.project_content_frame = content_frame
         self.project_checkboxes = {}  # 存储checkbox引用
         self.project_status_labels = {}  # 存储状态标签引用
-        row = 0
-        for project_name in self.project_repos.keys():
-            # 选择框
-            cb = ttk.Checkbutton(content_frame, variable=self.project_vars[project_name])
-            cb.grid(row=row, column=0, padx=5, pady=2)
-            self.project_checkboxes[project_name] = cb
-            
-            # 项目名称
-            ttk.Label(content_frame, text=project_name, style='Info.TLabel').grid(row=row, column=1, sticky="w", padx=5, pady=3)
-            
-            # 本地状态
-            exists = self.check_project_exists(project_name)
-            status_text = "已下载" if exists else "未下载"
-            status_color = "green" if exists else "red"
-            status_label = ttk.Label(content_frame, text=status_text, foreground=status_color)
-            status_label.grid(row=row, column=2, sticky="w", padx=5, pady=2)
-            self.project_status_labels[project_name] = status_label
-            
-            # 分支选择
-            branch_combo = ttk.Combobox(content_frame, textvariable=self.branch_vars[project_name], 
-                                      values=("master",), state="readonly", width=20)
-            branch_combo.grid(row=row, column=3, sticky="ew", padx=5, pady=2)
-            branch_combo.bind('<<ComboboxSelected>>', 
-                            lambda e, name=project_name: self.on_branch_changed(e, name))
-            self.branch_combos[project_name] = branch_combo
-            
-            # 进度条容器
-            progress_frame = ttk.Frame(content_frame)
-            progress_frame.grid(row=row, column=4, sticky="ew", padx=5, pady=2)
-            
-            # 创建进度条（初始隐藏）
-            progress_bar = ttk.Progressbar(progress_frame, mode='indeterminate', length=100)
-            progress_label = ttk.Label(progress_frame, text="", width=12)
-            
-            self.progress_bars[project_name] = {
-                'bar': progress_bar,
-                'label': progress_label
-            }
-            
-            # 操作按钮
-            action_frame = ttk.Frame(content_frame)
-            action_frame.grid(row=row, column=5, sticky="ew", padx=5, pady=2)
-            
-            ttk.Button(action_frame, text="打开", width=8, style='Primary.TButton',
-                      command=lambda name=project_name: self.open_project_dir(name)).pack(side=tk.LEFT, padx=2)
-            ttk.Button(action_frame, text="Qt打开", width=8, style='Primary.TButton',
-                      command=lambda name=project_name: self.open_project_with_qtcreator(name)).pack(side=tk.LEFT, padx=2)
-            ttk.Button(action_frame, text="删除", width=8, style='Danger.TButton',
-                      command=lambda name=project_name: self.delete_project_dir(name)).pack(side=tk.LEFT, padx=2)
-            ttk.Button(action_frame, text="打包", width=8, style='Success.TButton',
-                      command=lambda name=project_name: self.deb_packet_generate_dir(name)).pack(side=tk.LEFT, padx=2)
-            
-            row += 1
+        
+        # 初始化时显示所有项目
+        self.refresh_project_table()
 
     
     def create_package_table(self, parent):
@@ -5367,9 +5534,17 @@ if {{[llength $result] >= 4}} {{
                 elif message[0] == "branches":
                     project_name, branches = message[1], message[2]
                     combo = self.branch_combos[project_name]
-                    
                     # 获取当前分支选择框的值
-                    current_selection = combo.get()
+                    # 检查组件是否还存在（避免在表格刷新后访问已销毁的组件）
+                    try:
+                        # 检查组件是否仍然存在
+                        if not combo.winfo_exists():
+                            continue
+                        current_selection = combo.get()
+                    except tk.TclError:
+                        # 组件已被销毁，跳过
+                        continue
+
                     
                     # 更新分支选项
                     combo['values'] = branches
