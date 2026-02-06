@@ -292,6 +292,102 @@ class DeepinProjectDownloader:
             "os-config": {
                 "gitee": "https://gerrit.uniontech.com/base/os-config.git",
                 "github": "https://gerrit.uniontech.com/base/os-config.git"
+            },
+            "qt6-base": {
+                "gitee": "https://github.com/deepin-community/qt6-base.git",
+                "github": "https://github.com/deepin-community/qt6-base.git"
+            },
+            "qt6-declarative": {
+                "gitee": "https://github.com/deepin-community/qt6-declarative.git",
+                "github": "https://github.com/deepin-community/qt6-declarative.git"
+            },
+            "qt6-svg": {
+                "gitee": "https://github.com/deepin-community/qt6-svg.git",
+                "github": "https://github.com/deepin-community/qt6-svg.git"
+            },
+            "qt6-imageformats": {
+                "gitee": "https://github.com/deepin-community/qt6-imageformats.git",
+                "github": "https://github.com/deepin-community/qt6-imageformats.git"
+            },
+            "qt6-wayland": {
+                "gitee": "https://github.com/deepin-community/qt6-wayland.git",
+                "github": "https://github.com/deepin-community/qt6-wayland.git"
+            },
+            "qt6-webengine": {
+                "gitee": "https://github.com/deepin-community/qt6-webengine.git",
+                "github": "https://github.com/deepin-community/qt6-webengine.git"
+            },
+            "qt6-httpserver": {
+                "gitee": "https://github.com/deepin-community/qt6-httpserver.git",
+                "github": "https://github.com/deepin-community/qt6-httpserver.git"
+            },
+            "qt6-multimedia": {
+                "gitee": "https://github.com/deepin-community/qt6-multimedia.git",
+                "github": "https://github.com/deepin-community/qt6-multimedia.git"
+            },
+            "qt6-webview": {
+                "gitee": "https://github.com/deepin-community/qt6-webview.git",
+                "github": "https://github.com/deepin-community/qt6-webview.git"
+            },
+            "dde-daemon": {
+                "gitee": "https://github.com/linuxdeepin/dde-daemon.git",
+                "github": "https://github.com/linuxdeepin/dde-daemon.git"
+            },
+            "deepin-update-ui": {
+                "gitee": "https://github.com/linuxdeepin/deepin-update-ui.git",
+                "github": "https://github.com/linuxdeepin/deepin-update-ui.git"
+            },
+            "dde-session-ui": {
+                "gitee": "https://github.com/linuxdeepin/dde-session-ui.git",
+                "github": "https://github.com/linuxdeepin/dde-session-ui.git"
+            },
+            "dde-network-core": {
+                "gitee": "https://github.com/linuxdeepin/dde-network-core.git",
+                "github": "https://github.com/linuxdeepin/dde-network-core.git"
+            },
+            "dde-shell": {
+                "gitee": "https://github.com/linuxdeepin/dde-shell.git",
+                "github": "https://github.com/linuxdeepin/dde-shell.git"
+            },
+            "dtkdeclarative": {
+                "gitee": "https://github.com/linuxdeepin/dtkdeclarative.git",
+                "github": "https://github.com/linuxdeepin/dtkdeclarative.git"
+            },
+            "dde-appearance": {
+                "gitee": "https://github.com/linuxdeepin/dde-appearance.git",
+                "github": "https://github.com/linuxdeepin/dde-appearance.git"
+            },
+            "qt6integration": {
+                "gitee": "https://github.com/linuxdeepin/qt6integration.git",
+                "github": "https://github.com/linuxdeepin/qt6integration.git"
+            },
+            "dde-polkit-agent": {
+                "gitee": "https://github.com/linuxdeepin/dde-polkit-agent.git",
+                "github": "https://github.com/linuxdeepin/dde-polkit-agent.git"
+            },
+            "dde-control-center": {
+                "gitee": "https://github.com/linuxdeepin/dde-control-center.git",
+                "github": "https://github.com/linuxdeepin/dde-control-center.git"
+            },
+            "dde-launchpad": {
+                "gitee": "https://github.com/linuxdeepin/dde-launchpad.git",
+                "github": "https://github.com/linuxdeepin/dde-launchpad.git"
+            },
+            "dde-clipboard": {
+                "gitee": "https://github.com/linuxdeepin/dde-clipboard.git",
+                "github": "https://github.com/linuxdeepin/dde-clipboard.git"
+            },
+            "dde-tray-loader": {
+                "gitee": "https://github.com/linuxdeepin/dde-tray-loader.git",
+                "github": "https://github.com/linuxdeepin/dde-tray-loader.git"
+            },
+            "dde-session": {
+                "gitee": "https://github.com/linuxdeepin/dde-session.git",
+                "github": "https://github.com/linuxdeepin/dde-session.git"
+            },
+            "dde-session-shell": {
+                "gitee": "https://github.com/linuxdeepin/dde-session-shell.git",
+                "github": "https://github.com/linuxdeepin/dde-session-shell.git"
             }
         }
         
@@ -1127,8 +1223,31 @@ class DeepinProjectDownloader:
             row=1, column=2, padx=(5, 10), pady=2
         )
         
+        # SSH Key管理区域
+        ttk.Label(self.ssh_content_frame, text="SSH Key:").grid(row=2, column=0, padx=(10, 5), pady=2, sticky="w")
+        self.ssh_key_status_var = tk.StringVar(value="检测中...")
+        ttk.Label(self.ssh_content_frame, textvariable=self.ssh_key_status_var, foreground="orange").grid(
+            row=2, column=1, padx=(0, 5), pady=2, sticky="w"
+        )
+        
+        # SSH Key操作按钮
+        ssh_key_btn_frame = ttk.Frame(self.ssh_content_frame)
+        ssh_key_btn_frame.grid(row=2, column=2, padx=(5, 10), pady=2, sticky="e")
+        
+        ttk.Button(ssh_key_btn_frame, text="查看", command=self.view_ssh_key, style='Primary.TButton').pack(
+            side=tk.LEFT, padx=(0, 5)
+        )
+        ttk.Button(ssh_key_btn_frame, text="复制", command=self.copy_ssh_key, style='Primary.TButton').pack(
+            side=tk.LEFT, padx=(0, 5)
+        )
+        ttk.Button(ssh_key_btn_frame, text="生成", command=self.generate_ssh_key, style='Success.TButton').pack(
+            side=tk.LEFT
+        )
+        
         # 刷新SSH信息
         self.root.after(1500, self.refresh_ssh_info)
+        # 检查SSH Key状态
+        self.root.after(1600, self.check_ssh_key_status)
         
         # SSHFS配置区域（可折叠）
         sshfs_container = ttk.Frame(config_content_frame)
@@ -5325,6 +5444,9 @@ if {{[llength $result] >= 4}} {{
                 elif message[0] == "sshfs_title":
                     title = message[1]
                     self.sshfs_title_var.set(title)
+                elif message[0] == "ssh_key_status":
+                    status = message[1]
+                    self.ssh_key_status_var.set(status)
                         
         except queue.Empty:
             pass
@@ -5769,6 +5891,172 @@ if {{[llength $result] >= 4}} {{
         from datetime import datetime
         return datetime.now().strftime("%H:%M:%S")
 
+    def check_ssh_key_status(self):
+        """检查SSH Key状态"""
+        def check_task():
+            try:
+                ssh_dir = os.path.expanduser("~/.ssh")
+                ssh_key_path = os.path.join(ssh_dir, "id_rsa.pub")
+                
+                if os.path.exists(ssh_key_path):
+                    self.message_queue.put(("ssh_key_status", "已存在"))
+                    self.message_queue.put(("log", "[SSH Key] SSH公钥已存在"))
+                else:
+                    self.message_queue.put(("ssh_key_status", "未生成"))
+                    self.message_queue.put(("log", "[SSH Key] SSH公钥未生成"))
+                    
+            except Exception as e:
+                self.message_queue.put(("ssh_key_status", "检测失败"))
+                self.message_queue.put(("log", f"[SSH Key] 检测SSH Key状态时出错: {str(e)}"))
+        
+        threading.Thread(target=check_task, daemon=True).start()
+    
+    def view_ssh_key(self):
+        """查看SSH Key文件"""
+        try:
+            ssh_key_path = os.path.expanduser("~/.ssh/id_rsa.pub")
+            
+            if not os.path.exists(ssh_key_path):
+                messagebox.showwarning("警告", "SSH公钥文件不存在，请先生成SSH Key")
+                return
+            
+            # 使用系统默认编辑器打开文件
+            subprocess.Popen(["xdg-open", ssh_key_path])
+            self.log_message(f"[SSH Key] 已打开SSH公钥文件: {ssh_key_path}")
+            
+        except Exception as e:
+            self.log_message(f"[SSH Key] 打开SSH Key文件失败: {str(e)}")
+            messagebox.showerror("错误", f"打开SSH Key文件失败: {str(e)}")
+    
+    def copy_ssh_key(self):
+        """复制SSH Key内容到剪贴板"""
+        try:
+            ssh_key_path = os.path.expanduser("~/.ssh/id_rsa.pub")
+            
+            if not os.path.exists(ssh_key_path):
+                messagebox.showwarning("警告", "SSH公钥文件不存在，请先生成SSH Key")
+                return
+            
+            # 读取SSH Key内容
+            with open(ssh_key_path, 'r') as f:
+                ssh_key_content = f.read().strip()
+            
+            # 复制到剪贴板
+            self.root.clipboard_clear()
+            self.root.clipboard_append(ssh_key_content)
+            self.root.update()
+            
+            self.log_message(f"[SSH Key] 已复制SSH公钥到剪贴板")
+            messagebox.showinfo("成功", "SSH公钥已复制到剪贴板")
+            
+        except Exception as e:
+            self.log_message(f"[SSH Key] 复制SSH Key失败: {str(e)}")
+            messagebox.showerror("错误", f"复制SSH Key失败: {str(e)}")
+    
+    def generate_ssh_key(self):
+        """生成SSH Key"""
+        def generate_task():
+            try:
+                self.message_queue.put(("progress", "start"))
+                self.message_queue.put(("status", "正在生成SSH Key..."))
+                self.message_queue.put(("log", "[SSH Key] [开始] 开始生成SSH Key"))
+                
+                # 获取Git配置中的用户名和邮箱
+                name = self.git_name_var.get().strip()
+                email = self.git_email_var.get().strip()
+                
+                if not name or not email:
+                    self.message_queue.put(("log", "[SSH Key] [错误] Git用户名或邮箱未配置"))
+                    self.message_queue.put(("progress", "stop"))
+                    self.message_queue.put(("status", "SSH Key生成失败"))
+                    return
+                
+                # 检查.ssh目录是否存在
+                ssh_dir = os.path.expanduser("~/.ssh")
+                if not os.path.exists(ssh_dir):
+                    os.makedirs(ssh_dir, mode=0o700)
+                    self.message_queue.put(("log", "[SSH Key] [信息] 已创建.ssh目录"))
+                
+                # 检查SSH Key是否已存在
+                ssh_key_path = os.path.join(ssh_dir, "id_rsa.pub")
+                if os.path.exists(ssh_key_path):
+                    self.message_queue.put(("log", "[SSH Key] [警告] SSH公钥已存在"))
+                    response = messagebox.askyesno(
+                        "确认覆盖",
+                        "SSH公钥已存在，是否要重新生成？\n\n"
+                        "注意：重新生成后，旧的SSH Key将失效。",
+                        icon="warning"
+                    )
+                    if not response:
+                        self.message_queue.put(("log", "[SSH Key] [取消] 用户取消了SSH Key生成"))
+                        self.message_queue.put(("progress", "stop"))
+                        self.message_queue.put(("status", "SSH Key生成已取消"))
+                        return
+                
+                # 生成SSH Key
+                comment = email  # 使用邮箱作为注释
+                self.message_queue.put(("log", f"[SSH Key] [信息] 使用注释: {comment}"))
+                
+                # 使用ssh-keygen生成SSH Key，添加-q参数避免交互式提示
+                result = subprocess.run(
+                    ["ssh-keygen", "-t", "rsa", "-b", "4096", "-C", comment, "-f", os.path.join(ssh_dir, "id_rsa"), "-N", "", "-q", "-y"],
+                    capture_output=True, text=True, timeout=60
+                )
+                
+                if result.returncode == 0:
+                    self.message_queue.put(("log", "[SSH Key] [成功] SSH Key生成成功"))
+                    
+                    # 读取并显示SSH公钥
+                    with open(ssh_key_path, 'r') as f:
+                        ssh_key_content = f.read().strip()
+                    
+                    self.message_queue.put(("log", f"[SSH Key] [信息] 公钥内容:\n{ssh_key_content}"))
+                    
+                    # 更新状态
+                    self.message_queue.put(("ssh_key_status", "已存在"))
+                    
+                    # 询问是否复制到剪贴板
+                    response = messagebox.askyesno(
+                        "SSH Key生成成功",
+                        "SSH Key已成功生成！\n\n"
+                        "是否要复制公钥到剪贴板？",
+                        icon="info"
+                    )
+                    if response:
+                        self.root.clipboard_clear()
+                        self.root.clipboard_append(ssh_key_content)
+                        self.root.update()
+                        self.message_queue.put(("log", "[SSH Key] [信息] 已复制SSH公钥到剪贴板"))
+                    
+                else:
+                    error_msg = result.stderr.strip() if result.stderr else "未知错误"
+                    self.message_queue.put(("log", f"[SSH Key] [失败] SSH Key生成失败: {error_msg}"))
+                    messagebox.showerror("生成失败", f"SSH Key生成失败: {error_msg}")
+                
+            except subprocess.TimeoutExpired:
+                self.message_queue.put(("log", "[SSH Key] [超时] SSH Key生成超时"))
+                messagebox.showerror("超时", "SSH Key生成超时")
+            except Exception as e:
+                self.message_queue.put(("log", f"[SSH Key] [错误] SSH Key生成过程中出错: {str(e)}"))
+                messagebox.showerror("错误", f"SSH Key生成失败: {str(e)}")
+            finally:
+                self.message_queue.put(("progress", "stop"))
+                self.message_queue.put(("status", "SSH Key生成完成"))
+        
+        # 确认对话框
+        response = messagebox.askyesno(
+            "确认生成SSH Key",
+            "此操作将生成新的SSH Key。\n\n"
+            "SSH Key将使用Git配置中的用户名和邮箱。\n"
+            f"用户名: {self.git_name_var.get()}\n"
+            f"邮箱: {self.git_email_var.get()}\n\n"
+            "是否继续？",
+            icon="question"
+        )
+        
+        if response:
+            threading.Thread(target=generate_task, daemon=True).start()
+
     def cleanup_hosts_on_exit(self):
         """退出时清理hosts文件中的github.com条目（已废弃）"""
         # 此方法已废弃，改为手动按钮触发
@@ -5805,3 +6093,4 @@ def main():
 
 if __name__ == "__main__":
     main() 
+
