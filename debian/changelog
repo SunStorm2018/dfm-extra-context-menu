@@ -1,3 +1,10 @@
+dfm-tools-plugins (1.5.1-1) unstable; urgency=medium
+
+  * chore: Update version to 1.5.1-1
+  * feat(ssh): add SSH key management UI and functionality
+
+ -- zhanghongyuan <zhanghongyuan@uniontech.com>  Fri, 06 Feb 2026 11:16:25 +0800
+
 dfm-tools-plugins (1.5.0-1) unstable; urgency=medium
 
   * chore: Update version to 1.4.9-1
