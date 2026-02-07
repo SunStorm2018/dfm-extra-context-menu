@@ -426,6 +426,11 @@ class DeepinProjectDownloader:
             "usbview": "以树形结构USB总线设备查看工具"
         }
         
+        # 软件包搜索过滤变量
+        self.package_search_var = tk.StringVar()
+        self.package_search_var.trace_add("write", self.filter_packages)
+        self.filtered_packages = list(self.packages.keys())
+        
         # 初始化变量
         for project_name in self.project_repos.keys():
             self.project_vars[project_name] = tk.BooleanVar()
@@ -3842,10 +3847,9 @@ if {{[llength $result] >= 4}} {{
         search_frame = ttk.Frame(main_container)
         search_frame.pack(fill=tk.X, pady=(0, 5))
         
-        # 搜索图标和输入框
-        ttk.Label(search_frame, text="Search", font=('Arial', 12)).pack(side=tk.LEFT, padx=(5, 5))
+        # 搜索输入框（移除了搜索图标emoji）
         search_entry = ttk.Entry(search_frame, textvariable=self.search_var, font=('Arial', 10))
-        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 5))
         
         # 搜索提示
         ttk.Label(search_frame, text=f"共 {len(self.project_repos)} 个项目", foreground="gray").pack(side=tk.LEFT, padx=(5, 5))
@@ -3902,11 +3906,22 @@ if {{[llength $result] >= 4}} {{
         
         # 配置主容器权重
         main_container.columnconfigure(0, weight=1)
-        main_container.rowconfigure(1, weight=1)  # 内容区域可扩展
+        main_container.rowconfigure(2, weight=1)  # 内容区域可扩展
+        
+        # 搜索框框架
+        search_frame = ttk.Frame(main_container)
+        search_frame.grid(row=0, column=0, sticky="ew", pady=(0, 5))
+        
+        # 搜索输入框
+        search_entry = ttk.Entry(search_frame, textvariable=self.package_search_var, font=('Arial', 10))
+        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 5))
+        
+        # 搜索提示
+        ttk.Label(search_frame, text=f"共 {len(self.packages)} 个软件包", foreground="gray").pack(side=tk.LEFT, padx=(5, 5))
         
         # 固定标题框架
         header_frame = ttk.Frame(main_container)
-        header_frame.grid(row=0, column=0, sticky="ew", pady=(0, 2))
+        header_frame.grid(row=1, column=0, sticky="ew", pady=(0, 2))
         
         # 配置标题列权重
         header_frame.columnconfigure(0, weight=0, minsize=60)   # 选择列
@@ -3934,7 +3949,7 @@ if {{[llength $result] >= 4}} {{
         
         # 创建可滚动的内容框架
         content_scroll = ScrollableFrame(main_container)
-        content_scroll.grid(row=1, column=0, sticky="nsew")
+        content_scroll.grid(row=2, column=0, sticky="nsew")
         
         # 获取内容框架
         content_frame = content_scroll.get_frame()
@@ -3945,31 +3960,10 @@ if {{[llength $result] >= 4}} {{
         
         # 软件包行
         self.package_status_labels = {}
-        for idx, (package_name, description) in enumerate(self.packages.items()):
-            row = idx
-            
-            # 选择框（默认全部勾选）
-            var = tk.BooleanVar(value=True)
-            self.package_vars[package_name] = var
-            ttk.Checkbutton(content_frame, variable=var).grid(
-                row=row, column=0, padx=5, pady=2, sticky=tk.W
-            )
-            
-            # 软件包名称
-            ttk.Label(content_frame, text=package_name, style='Info.TLabel').grid(
-                row=row, column=1, padx=5, pady=3, sticky=tk.W
-            )
-            
-            # 描述
-            ttk.Label(content_frame, text=description, style='Info.TLabel').grid(
-                row=row, column=2, padx=5, pady=3, sticky=tk.W
-            )
-            
-            # 状态标签
-            status_label = ttk.Label(content_frame, text="检查中...", 
-                                   style='Info.TLabel', foreground="orange")
-            status_label.grid(row=row, column=3, padx=5, pady=3, sticky=tk.W)
-            self.package_status_labels[package_name] = status_label
+        self.package_content_frame = content_frame  # 保存引用用于刷新
+        
+        # 初始化时显示所有软件包
+        self.refresh_package_table()
 
         
         # 启动时检查软件包状态
@@ -4053,6 +4047,60 @@ if {{[llength $result] >= 4}} {{
                 self.message_queue.put(("progress", "stop"))
         
         threading.Thread(target=check_task, daemon=True).start()
+
+    def filter_packages(self, *args):
+        """过滤软件包列表"""
+        search_text = self.package_search_var.get().strip().lower()
+        
+        if not search_text:
+            # 搜索框为空，显示所有软件包
+            self.filtered_packages = list(self.packages.keys())
+        else:
+            # 根据软件包名称和描述过滤
+            self.filtered_packages = [
+                name for name in self.packages.keys()
+                if search_text in name.lower() or search_text in self.packages[name].lower()
+            ]
+        
+        # 重新构建软件包表格
+        self.refresh_package_table()
+    
+    def refresh_package_table(self):
+        """刷新软件包表格显示"""
+        # 清空现有的软件包行
+        if hasattr(self, 'package_content_frame'):
+            for widget in self.package_content_frame.winfo_children():
+                widget.destroy()
+        
+        # 重新创建软件包行
+        row = 0
+        for package_name in self.filtered_packages:
+            description = self.packages[package_name]
+            
+            # 选择框（默认全部勾选）
+            var = tk.BooleanVar(value=True)
+            self.package_vars[package_name] = var
+            ttk.Checkbutton(self.package_content_frame, variable=var).grid(
+                row=row, column=0, padx=5, pady=2, sticky=tk.W
+            )
+            
+            # 软件包名称
+            ttk.Label(self.package_content_frame, text=package_name, style='Info.TLabel').grid(
+                row=row, column=1, padx=5, pady=3, sticky=tk.W
+            )
+            
+            # 描述
+            ttk.Label(self.package_content_frame, text=description, style='Info.TLabel').grid(
+                row=row, column=2, padx=5, pady=3, sticky=tk.W
+            )
+            
+            # 状态标签
+            status_label = ttk.Label(self.package_content_frame, text="检查中...",
+                                   style='Info.TLabel', foreground="orange")
+            status_label.grid(row=row, column=3, padx=5, pady=3, sticky=tk.W)
+            self.package_status_labels[package_name] = status_label
+            
+            row += 1
 
     def install_packages(self):
         """安装选中的软件包"""
