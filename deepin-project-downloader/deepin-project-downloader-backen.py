@@ -2224,36 +2224,17 @@ class DeepinProjectDownloader:
                 self.message_queue.put(("status", "正在安装SSH服务器..."))
                 self.message_queue.put(("log", "[SSH] [开始] 开始安装openssh-server"))
                 
-                # 更新软件包列表
-                self.message_queue.put(("log", "[SSH] [步骤1] 正在更新软件包列表..."))
-                update_process = subprocess.Popen(
-                    ["pkexec", "apt", "update"], 
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.PIPE, 
-                    text=True, 
-                    bufsize=1, 
-                    universal_newlines=True
-                )
+                # 步骤1: 智能更新软件包列表（使用缓存机制）
+                self.message_queue.put(("log", "[SSH] [步骤1] 正在智能更新软件包列表..."))
                 
-                while True:
-                    output = update_process.stdout.readline()
-                    if output == '' and update_process.poll() is not None:
-                        break
-                    if output:
-                        line = output.strip()
-                        if line and not line.startswith('WARNING:'):
-                            self.message_queue.put(("log", f"[SSH] [apt update] {line}"))
+                # 使用智能更新方法（非强制，会检查缓存）
+                update_success = self.smart_apt_update(force=False)
                 
-                update_returncode = update_process.wait(timeout=60)
-                if update_returncode != 0:
-                    stderr_output = update_process.stderr.read()
-                    if "cancelled" in stderr_output.lower():
-                        self.message_queue.put(("log", "[SSH] [取消] 用户取消了权限授权"))
-                        return
-                    else:
-                        self.message_queue.put(("log", f"[SSH] [警告] 更新软件包列表失败: {stderr_output.strip()}"))
+                if not update_success:
+                    # 如果更新失败，询问用户是否继续
+                    self.message_queue.put(("log", "[SSH] [警告] 软件包列表更新失败，但将尝试继续安装"))
                 
-                # 安装openssh-server
+                # 步骤2: 安装openssh-server
                 self.message_queue.put(("log", "[SSH] [步骤2] 正在安装openssh-server..."))
                 install_process = subprocess.Popen(
                     ["pkexec", "apt", "install", "-y", "openssh-server"], 
@@ -2447,41 +2428,15 @@ class DeepinProjectDownloader:
                 self.message_queue.put(("status", "正在安装SSHFS..."))
                 self.message_queue.put(("log", "[SSHFS] [开始] 安装SSHFS"))
                 
-                # 步骤1: 更新软件源
-                self.message_queue.put(("log", "[SSHFS] [步骤1] 正在更新软件源..."))
-                update_cmd = ["pkexec", "apt", "update"]
+                # 步骤1: 智能更新软件源（使用缓存机制）
+                self.message_queue.put(("log", "[SSHFS] [步骤1] 正在智能更新软件源..."))
                 
-                # 使用Popen实时输出更新过程
-                update_process = subprocess.Popen(
-                    update_cmd, 
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.PIPE, 
-                    text=True, 
-                    bufsize=1, 
-                    universal_newlines=True
-                )
+                # 使用智能更新方法（非强制，会检查缓存）
+                update_success = self.smart_apt_update(force=False)
                 
-                # 实时读取输出
-                while True:
-                    output = update_process.stdout.readline()
-                    if output == '' and update_process.poll() is not None:
-                        break
-                    if output:
-                        line = output.strip()
-                        if line and not line.startswith('WARNING:'):
-                            self.message_queue.put(("log", f"[SSHFS] [apt update] {line}"))
-                
-                # 读取错误输出
-                stderr_output = update_process.stderr.read()
-                update_returncode = update_process.wait(timeout=60)
-                
-                if update_returncode != 0:
-                    if "cancelled" in stderr_output.lower():
-                        self.message_queue.put(("log", "[SSHFS] [取消] 用户取消了更新权限授权"))
-                        return
-                    else:
-                        self.message_queue.put(("log", f"[SSHFS] [失败] 软件源更新失败: {stderr_output.strip()}"))
-                        return
+                if not update_success:
+                    # 如果更新失败，询问用户是否继续
+                    self.message_queue.put(("log", "[SSHFS] [警告] 软件源更新失败，但将尝试继续安装"))
                 
                 # 步骤2: 安装SSHFS
                 self.message_queue.put(("log", "[SSHFS] [步骤2] 正在安装SSHFS..."))
@@ -3449,6 +3404,11 @@ if {{[llength $result] >= 4}} {{
             side=tk.LEFT
         )
         
+        # 添加"更新源"按钮（显式、手动触发）
+        ttk.Button(button_frame, text="更新源", command=self.manual_update_sources, style='Warning.TButton').pack(
+            side=tk.LEFT, padx=(10, 10)
+        )
+        
         # 软件源文件Tab页
         self.sources_notebook = ttk.Notebook(main_frame)
         self.sources_notebook.grid(row=1, column=0, sticky="nsew")
@@ -3625,42 +3585,17 @@ if {{[llength $result] >= 4}} {{
                             self.message_queue.put(("log", f"[软件源] [失败] 保存文件失败: {result.stderr}"))
                             return
                     
-                    # 更新软件源
-                    self.message_queue.put(("log", "[软件源] [步骤2] 正在更新软件源..."))
-                    update_cmd = ["pkexec", "apt", "update"]
+                    # 步骤2: 智能更新软件源（使用缓存机制）
+                    self.message_queue.put(("log", "[软件源] [步骤2] 正在智能更新软件源..."))
                     
-                    # 使用Popen实时输出
-                    update_process = subprocess.Popen(
-                        update_cmd, 
-                        stdout=subprocess.PIPE, 
-                        stderr=subprocess.PIPE, 
-                        text=True, 
-                        bufsize=1, 
-                        universal_newlines=True
-                    )
+                    # 使用智能更新方法（强制更新，因为用户刚修改了软件源配置）
+                    update_success = self.smart_apt_update(force=True)
                     
-                    # 实时读取输出
-                    while True:
-                        output = update_process.stdout.readline()
-                        if output == '' and update_process.poll() is not None:
-                            break
-                        if output:
-                            line = output.strip()
-                            if line and not line.startswith('WARNING:'):
-                                self.message_queue.put(("log", f"[软件源] [apt update] {line}"))
-                    
-                    # 读取错误输出
-                    stderr_output = update_process.stderr.read()
-                    update_returncode = update_process.wait(timeout=120)
-                    
-                    if update_returncode == 0:
+                    if update_success:
                         self.message_queue.put(("log", "[软件源] [成功] 软件源更新完成"))
                         self.message_queue.put(("log", f"[软件源] [完成] 已保存 {len(saved_files)} 个文件并更新软件源"))
                     else:
-                        if "cancelled" in stderr_output.lower():
-                            self.message_queue.put(("log", "[软件源] [取消] 用户取消了软件源更新"))
-                        else:
-                            self.message_queue.put(("log", f"[软件源] [警告] 软件源更新失败: {stderr_output.strip()}"))
+                        self.message_queue.put(("log", "[软件源] [警告] 软件源更新失败"))
                 
                 finally:
                     # 清理临时文件和目录
@@ -3737,6 +3672,95 @@ if {{[llength $result] >= 4}} {{
                 self.log_message(f"[软件源] [失败] 备份失败: {str(e)}")
         
         threading.Thread(target=backup_task, daemon=True).start()
+    
+    def manual_update_sources(self):
+        """手动更新软件源（用户显式触发）"""
+        def update_task():
+            try:
+                self.message_queue.put(("progress", "start"))
+                self.message_queue.put(("status", "正在手动更新软件源..."))
+                self.message_queue.put(("log", "[软件源] [手动] 用户手动触发更新源"))
+                
+                # 执行 apt update
+                success = self.smart_apt_update(force=True)
+                
+                if success:
+                    self.message_queue.put(("log", "[软件源] [成功] 手动更新源完成"))
+                else:
+                    self.message_queue.put(("log", "[软件源] [失败] 手动更新源失败"))
+                
+            except Exception as e:
+                self.message_queue.put(("log", f"[软件源] [错误] 手动更新源时出错: {str(e)}"))
+            finally:
+                self.message_queue.put(("progress", "stop"))
+                self.message_queue.put(("status", "手动更新源操作完成"))
+        
+        # 确认对话框
+        response = messagebox.askyesno(
+            "确认更新源",
+            "此操作将手动更新软件源。\n\n"
+            "是否继续？",
+            icon="question"
+        )
+        
+        if response:
+            threading.Thread(target=update_task, daemon=True).start()
+    
+    def smart_apt_update(self, force=False):
+        """智能 apt update：基于时间戳的节流机制
+        
+        参数:
+            force: 是否强制更新（忽略缓存）
+        
+        返回:
+            bool: 更新是否成功
+        """
+        try:
+            # 如果不是强制更新，检查是否需要更新
+            if not force:
+                if not self.should_update_repos():
+                    self.log_message("[缓存] 距离上次更新未超过3天，跳过 apt update")
+                    return True  # 返回 True 表示"不需要更新但不是错误"
+            
+            # 执行 apt update
+            self.log_message("[apt update] 开始执行 apt update...")
+            
+            update_cmd = ["pkexec", "apt", "update"]
+            result = subprocess.run(
+                update_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=120
+            )
+            
+            # 实时输出日志（通过消息队列）
+            if result.stdout:
+                for line in result.stdout.split('\n'):
+                    line = line.strip()
+                    if line and not line.startswith('WARNING:'):
+                        self.log_message(f"[apt update] {line}")
+            
+            if result.returncode == 0:
+                # 更新成功，更新缓存时间戳
+                self.update_cache_timestamp()
+                self.log_message("[apt update] 软件源更新成功")
+                return True
+            else:
+                # 更新失败
+                stderr_output = result.stderr.strip() if result.stderr else "未知错误"
+                if "cancelled" in stderr_output.lower():
+                    self.log_message("[apt update] 用户取消了权限授权")
+                else:
+                    self.log_message(f"[apt update] 软件源更新失败: {stderr_output}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            self.log_message("[apt update] 更新超时")
+            return False
+        except Exception as e:
+            self.log_message(f"[apt update] 更新过程出错: {str(e)}")
+            return False
         
     def check_project_exists(self, project_name):
         """检查项目在本地是否存在"""
@@ -4133,58 +4157,18 @@ if {{[llength $result] >= 4}} {{
                     desc = self.packages.get(pkg, "未知软件包")
                     self.message_queue.put(("log", f"[软件包] • {pkg} - {desc}"))
                 
-                # 步骤1: 更新软件源
-                self.message_queue.put(("log", "[软件包] [步骤1] 步骤 1/2: 更新软件源 (apt update)"))
-                self.message_queue.put(("status", "正在更新软件源..."))
+                # 步骤1: 智能更新软件源（使用缓存机制）
+                self.message_queue.put(("log", "[软件包] [步骤1] 步骤 1/2: 智能更新软件源 (apt update)"))
+                self.message_queue.put(("status", "正在智能更新软件源..."))
                 
-                update_cmd = ["pkexec", "apt", "update"]
-                self.message_queue.put(("log", f"[软件包] 执行命令: {' '.join(update_cmd)}"))
+                # 使用智能更新方法（非强制，会检查缓存）
+                update_success = self.smart_apt_update(force=False)
                 
-                # 使用Popen实时输出
-                try:
-                    update_process = subprocess.Popen(
-                        update_cmd, 
-                        stdout=subprocess.PIPE, 
-                        stderr=subprocess.PIPE, 
-                        text=True, 
-                        bufsize=1, 
-                        universal_newlines=True
-                    )
-                    
-                    # 实时读取输出
-                    while True:
-                        output = update_process.stdout.readline()
-                        if output == '' and update_process.poll() is not None:
-                            break
-                        if output:
-                            # 过滤掉空行和不重要的信息
-                            line = output.strip()
-                            if line and not line.startswith('WARNING:'):
-                                self.message_queue.put(("log", f"[软件包] [apt update] {line}"))
-                    
-                    # 读取错误输出
-                    stderr_output = update_process.stderr.read()
-                    update_returncode = update_process.wait(timeout=120)
-                    
-                    if update_returncode == 0:
-                        self.message_queue.put(("log", "[软件包] [成功] 软件源更新成功"))
-                    else:
-                        self.message_queue.put(("log", f"[软件包] [警告] 软件源更新失败，返回码: {update_returncode}"))
-                        if stderr_output:
-                            if "cancelled" in stderr_output.lower():
-                                self.message_queue.put(("log", "[软件包] [取消] 用户取消了权限授权"))
-                                return
-                            else:
-                                self.message_queue.put(("log", f"[软件包] [错误信息] {stderr_output.strip()}"))
-                    
-                    self.message_queue.put(("log", "[软件包] 尝试继续安装软件包..."))
-                        
-                except subprocess.TimeoutExpired:
-                    self.message_queue.put(("log", "[软件包] [超时] 软件源更新超时"))
-                    if 'update_process' in locals():
-                        update_process.kill()
-                except Exception as e:
-                    self.message_queue.put(("log", f"[软件包] [错误] 软件源更新过程出错: {str(e)}"))
+                if not update_success:
+                    # 如果更新失败，询问用户是否继续
+                    self.message_queue.put(("log", "[软件包] [警告] 软件源更新失败，但将尝试继续安装"))
+                
+                self.message_queue.put(("log", "[软件包] 尝试继续安装软件包..."))
                 
                 # 步骤2: 安装软件包
                 self.message_queue.put(("log", "[软件包] [步骤2] 步骤 2/2: 安装软件包"))
@@ -4734,6 +4718,17 @@ if {{[llength $result] >= 4}} {{
             def install_task():
                 try:
                     self.message_queue.put(("progress", "start"))
+                    
+                    # 步骤0: 智能更新软件源（使用缓存机制）
+                    self.message_queue.put(("log", "[依赖] [步骤0] 智能更新软件源 (apt update)"))
+                    self.message_queue.put(("status", "正在智能更新软件源..."))
+                    
+                    # 使用智能更新方法（非强制，会检查缓存）
+                    update_success = self.smart_apt_update(force=False)
+                    
+                    if not update_success:
+                        # 如果更新失败，询问用户是否继续
+                        self.message_queue.put(("log", "[依赖] [警告] 软件源更新失败，但将尝试继续安装依赖"))
                     
                     for project_name in existing_projects:
                         self.message_queue.put(("status", f"正在为 {project_name} 安装依赖..."))
