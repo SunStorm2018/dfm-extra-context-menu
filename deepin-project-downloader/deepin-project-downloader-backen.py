@@ -575,10 +575,11 @@ class DeepinProjectDownloader:
         style.theme_use('clam')
         
         # 配置样式
-        style.configure('Title.TLabel', font=('Arial', 18, 'bold'), foreground='#2c3e50')
-        style.configure('Header.TLabel', font=('Arial', 12, 'bold'), foreground='#34495e')
+        style.configure('Title.TLabel', font=('Arial', 10, 'bold'), foreground='#2c3e50')
+        style.configure('Header.TLabel', font=('Arial', 10, 'bold'), foreground='#34495e')
         style.configure('Info.TLabel', font=('Arial', 10), foreground='#7f8c8d')
         style.configure('Status.TLabel', font=('Arial', 10), foreground='orange')
+        style.configure('FilePath.TLabel', font=('', 10), foreground='#2c3e50')
         
         # 按钮样式 - 调整为更紧凑的尺寸
         style.configure('Primary.TButton', font=('Arial', 9, 'bold'), background='#F8F8F8', padding=(8, 4))
@@ -591,8 +592,8 @@ class DeepinProjectDownloader:
         style.configure('Section.TFrame', relief='groove', borderwidth=2, background='#f8f9fa')
         
         # 标签框架样式
-        style.configure('Title.TLabelframe', font=('Arial', 11, 'bold'), foreground='#2c3e50')
-        style.configure('Title.TLabelframe.Label', font=('Arial', 11, 'bold'), foreground='#2c3e50')
+        style.configure('Title.TLabelframe', font=('Arial', 10, 'bold'), foreground='#2c3e50')
+        style.configure('Title.TLabelframe.Label', font=('Arial', 10, 'bold'), foreground='#2c3e50')
         
         # 进度条样式
         style.configure('Custom.Horizontal.TProgressbar', 
@@ -5726,11 +5727,11 @@ if {{[llength $result] >= 4}} {{
         host_config_tab = ttk.Frame(self.host_notebook)
         self.host_notebook.add(host_config_tab, text="Host配置")
         host_config_tab.columnconfigure(0, weight=1)
-        host_config_tab.rowconfigure(0, weight=1)
+        host_config_tab.rowconfigure(1, weight=1)
         
         # 文件路径标签
-        self.host_file_label = ttk.Label(host_config_tab, text="/etc/hosts", font=("", 9, "bold"))
-        self.host_file_label.grid(row=0, column=0, sticky="w", pady=(0, 5))
+        self.host_file_label = ttk.Label(host_config_tab, text="/etc/hosts", style='FilePath.TLabel')
+        self.host_file_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
         
         # 文本编辑框
         self.host_text = scrolledtext.ScrolledText(host_config_tab, wrap=tk.WORD, height=20)
