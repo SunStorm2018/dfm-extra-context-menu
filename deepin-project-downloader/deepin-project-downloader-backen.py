@@ -108,6 +108,120 @@ class ScrollableFrame(ttk.Frame):
         self.after_idle(self._bind_all_children)
 
 class DeepinProjectDownloader:
+    
+    @staticmethod
+    def create_enhanced_text_editor(parent, **kwargs):
+        """创建增强的文本编辑器，支持撤销和粘贴替换选中文本
+        
+        参数:
+            parent: 父容器
+            **kwargs: 传递给 Text 或 ScrolledText 的其他参数
+            
+        返回:
+            配置好的文本编辑器组件
+        """
+        # 如果使用 ScrolledText，需要特殊处理
+        if 'height' in kwargs or 'wrap' in kwargs:
+            # 创建 ScrolledText 并启用撤销功能
+            text_widget = scrolledtext.ScrolledText(
+                parent,
+                undo=True,
+                maxundo=-1,
+                autoseparators=True,
+                **kwargs
+            )
+        else:
+            # 创建普通 Text 并启用撤销功能
+            text_widget = tk.Text(
+                parent,
+                undo=True,
+                maxundo=-1,
+                autoseparators=True,
+                **kwargs
+            )
+        
+        # 绑定粘贴事件，使其替换选中的文本
+        def paste_with_selection_replace(event=None):
+            """粘贴时替换选中的文本"""
+            try:
+                # 如果有选中的文本，先删除
+                if text_widget.tag_ranges(tk.SEL):
+                    text_widget.delete(tk.SEL_FIRST, tk.SEL_LAST)
+                # 执行粘贴
+                text_widget.event_generate("<<Paste>>")
+                return "break"  # 阻止默认的粘贴行为
+            except Exception:
+                # 如果出错，使用默认粘贴
+                text_widget.event_generate("<<Paste>>")
+                return "break"
+        
+        # 绑定 Ctrl+V 到自定义粘贴函数
+        text_widget.bind("<Control-v>", paste_with_selection_replace)
+        text_widget.bind("<Control-V>", paste_with_selection_replace)  # 兼容大写V
+        
+        return text_widget
+    
+    @staticmethod
+    def _text_select_all(text_widget):
+        """全选文本"""
+        try:
+            text_widget.tag_add(tk.SEL, "1.0", tk.END)
+            text_widget.mark_set(tk.INSERT, "1.0")
+            text_widget.focus_set()
+        except Exception:
+            pass
+    
+    @staticmethod
+    def _text_copy(text_widget):
+        """复制选中的文本"""
+        try:
+            selected_text = text_widget.get(tk.SEL_FIRST, tk.SEL_LAST)
+            text_widget.clipboard_clear()
+            text_widget.clipboard_append(selected_text)
+        except tk.TclError:
+            # 没有选中文本
+            pass
+    
+    @staticmethod
+    def _text_paste(text_widget):
+        """粘贴文本（替换选中的文本）"""
+        try:
+            # 如果有选中的文本，先删除
+            if text_widget.tag_ranges(tk.SEL):
+                text_widget.delete(tk.SEL_FIRST, tk.SEL_LAST)
+            # 执行粘贴
+            text_widget.event_generate("<<Paste>>")
+        except Exception:
+            pass
+    
+    @staticmethod
+    def _text_cut(text_widget):
+        """剪切选中的文本"""
+        try:
+            selected_text = text_widget.get(tk.SEL_FIRST, tk.SEL_LAST)
+            text_widget.clipboard_clear()
+            text_widget.clipboard_append(selected_text)
+            text_widget.delete(tk.SEL_FIRST, tk.SEL_LAST)
+        except tk.TclError:
+            # 没有选中文本
+            pass
+    
+    @staticmethod
+    def _text_undo(text_widget):
+        """撤销操作"""
+        try:
+            text_widget.edit_undo()
+        except Exception:
+            pass
+    
+    @staticmethod
+    def _text_redo(text_widget):
+        """重做操作"""
+        try:
+            text_widget.edit_redo()
+        except Exception:
+            pass
+    
     def __init__(self, root):
         self.root = root
         self.root.title("Deepin 项目下载器")
@@ -125,6 +239,12 @@ class DeepinProjectDownloader:
         self.cache_file = os.path.join(self.cache_dir, "last_update.json")
         self.update_interval_days = 3  # 更新间隔：3天
         self.init_cache_directory()
+        
+        # SSHFS历史记录
+        self.sshfs_history_file = os.path.join(self.cache_dir, "sshfs_history.json")
+        self.sshfs_history = []  # 存储所有历史记录
+        self.sshfs_history_max_count = 20  # 最多保存20条历史记录
+        self.init_sshfs_history()
         
         # 注册程序退出时的清理函数（移除自动清理）
         # self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -527,6 +647,92 @@ class DeepinProjectDownloader:
                 
         except Exception as e:
             self.log_message(f"[缓存] 初始化缓存目录失败: {str(e)}")
+    
+    def init_sshfs_history(self):
+        """初始化SSHFS历史记录"""
+        try:
+            # 确保缓存目录存在
+            os.makedirs(self.cache_dir, exist_ok=True)
+            
+            # 加载历史记录
+            if os.path.exists(self.sshfs_history_file):
+                with open(self.sshfs_history_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.sshfs_history = data.get('sshfs_history', [])
+                self.log_message(f"[SSHFS历史] 已加载 {len(self.sshfs_history)} 条历史记录")
+            else:
+                self.sshfs_history = []
+                self.log_message("[SSHFS历史] 历史记录文件不存在，将创建新的历史记录")
+                
+        except Exception as e:
+            self.log_message(f"[SSHFS历史] 加载历史记录失败: {str(e)}")
+            self.sshfs_history = []
+    
+    def load_sshfs_history(self):
+        """加载SSHFS历史记录"""
+        return self.sshfs_history
+    
+    def save_sshfs_history(self):
+        """保存SSHFS历史记录到文件"""
+        try:
+            data = {
+                'sshfs_history': self.sshfs_history,
+                'last_update': time.strftime('%Y-%m-%d %H:%M:%S')
+            }
+            
+            with open(self.sshfs_history_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            
+            self.log_message(f"[SSHFS历史] 已保存 {len(self.sshfs_history)} 条历史记录")
+            
+        except Exception as e:
+            self.log_message(f"[SSHFS历史] 保存历史记录失败: {str(e)}")
+    
+    def add_sshfs_history_entry(self, host, username, remote_path, local_path):
+        """添加SSHFS历史记录条目"""
+        try:
+            # 创建新的历史记录条目
+            entry = {
+                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'host': host,
+                'username': username,
+                'remote_path': remote_path,
+                'local_path': local_path
+            }
+            
+            # 检查是否已存在相同的记录（避免重复）
+            is_duplicate = False
+            for existing_entry in self.sshfs_history:
+                if (existing_entry['host'] == host and
+                    existing_entry['username'] == username and
+                    existing_entry['remote_path'] == remote_path and
+                    existing_entry['local_path'] == local_path):
+                    is_duplicate = True
+                    # 更新时间戳
+                    existing_entry['timestamp'] = entry['timestamp']
+                    break
+            
+            # 如果不是重复记录，添加到列表开头
+            if not is_duplicate:
+                self.sshfs_history.insert(0, entry)
+                
+                # 限制历史记录数量
+                if len(self.sshfs_history) > self.sshfs_history_max_count:
+                    self.sshfs_history = self.sshfs_history[:self.sshfs_history_max_count]
+            
+            # 保存到文件
+            self.save_sshfs_history()
+            
+            self.log_message(f"[SSHFS历史] 已添加历史记录: {username}@{host}:{remote_path}")
+            
+        except Exception as e:
+            self.log_message(f"[SSHFS历史] 添加历史记录失败: {str(e)}")
+    
+    def get_latest_sshfs_config(self):
+        """获取最近的SSHFS配置"""
+        if self.sshfs_history:
+            return self.sshfs_history[0]
+        return None
     
     def should_update_repos(self):
         """检查是否需要更新项目仓库列表"""
@@ -1184,7 +1390,7 @@ class DeepinProjectDownloader:
         
         # 源选择标题
         ttk.Label(source_header_frame, text="源选择", font=("", 9, "bold")).grid(
-            row=0, column=1, padx=(0, 5), pady=5, sticky="w"
+            row=0, column=1, padx=(0, 2), pady=2, sticky="w"
         )
         
         # 源选择内容区域
@@ -1406,16 +1612,38 @@ class DeepinProjectDownloader:
         self.sshfs_content_frame.columnconfigure(1, weight=1)
         # 默认不显示内容区域（折叠状态）
         
+        # SSHFS历史记录选择(移到最上面,最常使用)
+        ttk.Label(self.sshfs_content_frame, text="历史记录:").grid(row=0, column=0, padx=(10, 5), pady=(5, 2), sticky="w")
+        self.sshfs_history_var = tk.StringVar(value="无历史记录")
+        self.sshfs_history_combo = ttk.Combobox(self.sshfs_content_frame, textvariable=self.sshfs_history_var,
+                                              state="readonly", width=40)
+        self.sshfs_history_combo.grid(row=0, column=1, padx=(0, 5), pady=(5, 2), sticky="ew")
+        self.sshfs_history_combo.bind('<<ComboboxSelected>>', self.on_sshfs_history_selected)
+        
+        # 历史记录按钮框架
+        history_btn_frame = ttk.Frame(self.sshfs_content_frame)
+        history_btn_frame.grid(row=0, column=2, padx=(5, 10), pady=(5, 2), sticky="e")
+        
+        # 刷新历史记录按钮
+        ttk.Button(history_btn_frame, text="刷新", command=self.refresh_sshfs_history, style='Primary.TButton').pack(
+            side=tk.LEFT, padx=(0, 5)
+        )
+        
+        # 删除历史记录按钮
+        ttk.Button(history_btn_frame, text="删除", command=self.delete_sshfs_history_entry, style='Danger.TButton').pack(
+            side=tk.LEFT
+        )
+        
         # SSHFS状态
-        ttk.Label(self.sshfs_content_frame, text="SSHFS状态:").grid(row=0, column=0, padx=(10, 5), pady=(5, 2), sticky="w")
+        ttk.Label(self.sshfs_content_frame, text="SSHFS状态:").grid(row=1, column=0, padx=(10, 5), pady=2, sticky="w")
         self.sshfs_status_var = tk.StringVar(value="检测中...")
         ttk.Label(self.sshfs_content_frame, textvariable=self.sshfs_status_var, foreground="orange").grid(
-            row=0, column=1, padx=(0, 5), pady=(5, 2), sticky="w"
+            row=1, column=1, padx=(0, 5), pady=2, sticky="w"
         )
         
         # SSHFS操作按钮
         sshfs_btn_frame = ttk.Frame(self.sshfs_content_frame)
-        sshfs_btn_frame.grid(row=0, column=2, padx=(5, 10), pady=(5, 2), sticky="e")
+        sshfs_btn_frame.grid(row=1, column=2, padx=(5, 10), pady=2, sticky="e")
         
         ttk.Button(sshfs_btn_frame, text="安装sshfs", command=self.install_sshfs, style='Success.TButton').pack(
             side=tk.LEFT, padx=(0, 5)
@@ -1437,55 +1665,57 @@ class DeepinProjectDownloader:
         )
         
         # SSHFS命令
-        ttk.Label(self.sshfs_content_frame, text="SSHFS命令:").grid(row=1, column=0, padx=(10, 5), pady=2, sticky="w")
+        ttk.Label(self.sshfs_content_frame, text="SSHFS命令:").grid(row=2, column=0, padx=(10, 5), pady=2, sticky="w")
         self.sshfs_command_var = tk.StringVar(value="")
         sshfs_command_entry = ttk.Entry(self.sshfs_content_frame, textvariable=self.sshfs_command_var, state="readonly")
-        sshfs_command_entry.grid(row=1, column=1, padx=(0, 5), pady=2, sticky="ew")
+        sshfs_command_entry.grid(row=2, column=1, padx=(0, 5), pady=2, sticky="ew")
         
         # 复制命令按钮
         ttk.Button(self.sshfs_content_frame, text="复制", command=self.copy_sshfs_command, style='Primary.TButton').grid(
-            row=1, column=2, padx=(5, 10), pady=2
+            row=2, column=2, padx=(5, 10), pady=2
         )
         
         # 主机地址
-        ttk.Label(self.sshfs_content_frame, text="主机地址:").grid(row=2, column=0, padx=(10, 5), pady=2, sticky="w")
+        ttk.Label(self.sshfs_content_frame, text="主机地址:").grid(row=3, column=0, padx=(10, 5), pady=2, sticky="w")
         self.sshfs_host_var = tk.StringVar(value="")
         sshfs_host_entry = ttk.Entry(self.sshfs_content_frame, textvariable=self.sshfs_host_var)
-        sshfs_host_entry.grid(row=2, column=1, padx=(0, 5), pady=2, sticky="ew")
+        sshfs_host_entry.grid(row=3, column=1, padx=(0, 5), pady=2, sticky="ew")
         
         # 用户名
-        ttk.Label(self.sshfs_content_frame, text="用户名:").grid(row=3, column=0, padx=(10, 5), pady=2, sticky="w")
+        ttk.Label(self.sshfs_content_frame, text="用户名:").grid(row=4, column=0, padx=(10, 5), pady=2, sticky="w")
         self.sshfs_username_var = tk.StringVar(value="")
         sshfs_username_entry = ttk.Entry(self.sshfs_content_frame, textvariable=self.sshfs_username_var)
-        sshfs_username_entry.grid(row=3, column=1, padx=(0, 5), pady=2, sticky="ew")
+        sshfs_username_entry.grid(row=4, column=1, padx=(0, 5), pady=2, sticky="ew")
         
         # 远程路径
-        ttk.Label(self.sshfs_content_frame, text="远程路径:").grid(row=4, column=0, padx=(10, 5), pady=2, sticky="w")
+        ttk.Label(self.sshfs_content_frame, text="远程路径:").grid(row=5, column=0, padx=(10, 5), pady=2, sticky="w")
         self.sshfs_remote_path_var = tk.StringVar(value="/")
         sshfs_remote_path_entry = ttk.Entry(self.sshfs_content_frame, textvariable=self.sshfs_remote_path_var)
-        sshfs_remote_path_entry.grid(row=4, column=1, padx=(0, 5), pady=2, sticky="ew")
+        sshfs_remote_path_entry.grid(row=5, column=1, padx=(0, 5), pady=2, sticky="ew")
         
         # 本地路径
-        ttk.Label(self.sshfs_content_frame, text="本地路径:").grid(row=5, column=0, padx=(10, 5), pady=2, sticky="w")
+        ttk.Label(self.sshfs_content_frame, text="本地路径:").grid(row=6, column=0, padx=(10, 5), pady=2, sticky="w")
         self.sshfs_local_path_var = tk.StringVar(value="")
         sshfs_local_path_entry = ttk.Entry(self.sshfs_content_frame, textvariable=self.sshfs_local_path_var)
-        sshfs_local_path_entry.grid(row=5, column=1, padx=(0, 5), pady=2, sticky="ew")
+        sshfs_local_path_entry.grid(row=6, column=1, padx=(0, 5), pady=2, sticky="ew")
         
         # 选择路径按钮
         ttk.Button(self.sshfs_content_frame, text="选择路径", command=self.select_sshfs_local_path, style='Primary.TButton').grid(
-            row=5, column=2, padx=(5, 10), pady=2
+            row=6, column=2, padx=(5, 10), pady=2
         )
         
         # 终端语言选择
-        ttk.Label(self.sshfs_content_frame, text="终端语言:").grid(row=6, column=0, padx=(10, 5), pady=2, sticky="w")
+        ttk.Label(self.sshfs_content_frame, text="终端语言:").grid(row=7, column=0, padx=(10, 5), pady=2, sticky="w")
         self.sshfs_language_var = tk.StringVar(value="English")
-        language_combo = ttk.Combobox(self.sshfs_content_frame, textvariable=self.sshfs_language_var, 
+        language_combo = ttk.Combobox(self.sshfs_content_frame, textvariable=self.sshfs_language_var,
                                      values=["English", "中文"], state="readonly", width=10)
-        language_combo.grid(row=6, column=1, padx=(0, 5), pady=2, sticky="w")
+        language_combo.grid(row=7, column=1, padx=(0, 5), pady=2, sticky="w")
         language_combo.bind('<<ComboboxSelected>>', self.on_language_changed)
         
         # 初始化SSHFS配置
         self.root.after(2000, self.init_sshfs_config)
+        # 刷新历史记录下拉框
+        self.root.after(2500, self.refresh_sshfs_history)
         
         # SSHFS状态检查控制标志
         self.sshfs_status_checking = False
@@ -1689,8 +1919,8 @@ class DeepinProjectDownloader:
         main_frame.rowconfigure(1, weight=1, minsize=250)
         
         # 日志文本框（适当调整高度）
-        self.log_text = scrolledtext.ScrolledText(log_frame, height=8, state=tk.NORMAL, 
-                                                 font=('Consolas', 9), 
+        self.log_text = scrolledtext.ScrolledText(log_frame, height=8, state=tk.NORMAL,
+                                                 font=('Consolas', 9),
                                                  background='#f8f9fa',
                                                  foreground='#2c3e50',
                                                  insertbackground='#4a90e2')
@@ -1699,15 +1929,10 @@ class DeepinProjectDownloader:
         # 绑定事件阻止编辑，但允许选择和复制
         self.log_text.bind("<KeyPress>", self._on_key_press)  # 控制键盘输入
         self.log_text.bind("<Button-2>", lambda e: "break")  # 阻止中键粘贴
-        self.log_text.bind("<Button-3>", self._show_log_context_menu)  # 右键菜单
         
-        # 在日志区域添加清空日志按钮
-        log_button_frame = ttk.Frame(log_frame)
-        log_button_frame.grid(row=1, column=0, sticky="ew", pady=(5, 0))
-        
-        ttk.Button(log_button_frame, text="清空日志", command=self.clear_log, style='Warning.TButton').pack(
-            side=tk.RIGHT, padx=(5, 0)
-        )
+        # 添加清空日志按钮
+        clear_log_btn = ttk.Button(log_frame, text="清空日志", command=self._log_clear, style='Danger.TButton')
+        clear_log_btn.grid(row=0, column=0, sticky="se", padx=18, pady=10)
         
         # 进度条
         self.progress = ttk.Progressbar(main_frame, mode='indeterminate', style='Custom.Horizontal.TProgressbar')
@@ -2367,20 +2592,46 @@ class DeepinProjectDownloader:
     def init_sshfs_config(self):
         """初始化SSHFS配置"""
         try:
-            # 只在没有保存的配置时才设置默认值
-            if not self.sshfs_host_var.get().strip():
-                host = self.get_local_ip()
-                self.sshfs_host_var.set(host)
+            # 优先级：1. 配置文件中的SSHFS配置 2. 历史记录中的最新配置 3. 默认值
             
-            if not self.sshfs_local_path_var.get().strip():
-                default_local_path = os.path.join(self.save_path.get(), "mount", "remote")
-                self.sshfs_local_path_var.set(default_local_path)
+            # 检查配置文件中是否有SSHFS配置
+            has_config = (self.sshfs_host_var.get().strip() or
+                         self.sshfs_username_var.get().strip() or
+                         self.sshfs_remote_path_var.get().strip() != "/" or
+                         self.sshfs_local_path_var.get().strip())
             
-            # 绑定变量变化事件，自动更新SSHFS命令
-            self.sshfs_host_var.trace_add("write", self.update_sshfs_command)
-            self.sshfs_username_var.trace_add("write", self.update_sshfs_command)
-            self.sshfs_remote_path_var.trace_add("write", self.update_sshfs_command)
-            self.sshfs_local_path_var.trace_add("write", self.update_sshfs_command)
+            if not has_config:
+                # 没有配置文件配置，尝试使用历史记录
+                latest_config = self.get_latest_sshfs_config()
+                if latest_config:
+                    # 使用历史记录中的最新配置
+                    self.log_message("[SSHFS] 使用历史记录中的最新配置")
+                    if latest_config['host']:
+                        self.sshfs_host_var.set(latest_config['host'])
+                    if latest_config['username']:
+                        self.sshfs_username_var.set(latest_config['username'])
+                    if latest_config['remote_path']:
+                        self.sshfs_remote_path_var.set(latest_config['remote_path'])
+                    if latest_config['local_path']:
+                        self.sshfs_local_path_var.set(latest_config['local_path'])
+                else:
+                    # 没有历史记录，使用默认值
+                    self.log_message("[SSHFS] 使用默认配置")
+                    if not self.sshfs_host_var.get().strip():
+                        host = self.get_local_ip()
+                        self.sshfs_host_var.set(host)
+                    
+                    if not self.sshfs_local_path_var.get().strip():
+                        default_local_path = os.path.join(self.save_path.get(), "mount", "remote")
+                        self.sshfs_local_path_var.set(default_local_path)
+            else:
+                self.log_message("[SSHFS] 使用配置文件中的配置")
+            
+            # 绑定变量变化事件，自动更新SSHFS命令并记录历史
+            self.sshfs_host_var.trace_add("write", self.on_sshfs_config_changed)
+            self.sshfs_username_var.trace_add("write", self.on_sshfs_config_changed)
+            self.sshfs_remote_path_var.trace_add("write", self.on_sshfs_config_changed)
+            self.sshfs_local_path_var.trace_add("write", self.on_sshfs_config_changed)
             
             # 手动触发一次命令更新
             self.update_sshfs_command()
@@ -2390,6 +2641,71 @@ class DeepinProjectDownloader:
             
         except Exception as e:
             self.log_message(f"[SSHFS] 初始化配置失败: {str(e)}")
+    
+    def validate_sshfs_config(self, host, username, remote_path, local_path):
+        """验证SSHFS配置是否有效
+        
+        返回: (is_valid, error_message)
+        """
+        try:
+            import re
+            
+            # 验证主机地址
+            if not host or not host.strip():
+                return False, "主机地址不能为空"
+            
+            host = host.strip()
+            
+            # 验证IP地址格式或主机名
+            # 简单的IP地址验证(支持IPv4)
+            ip_pattern = r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$'
+            if re.match(ip_pattern, host):
+                # 验证IP地址的每个段是否在0-255之间
+                parts = host.split('.')
+                if any(int(part) > 255 for part in parts):
+                    return False, "IP地址格式不正确"
+            elif not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9\-\.]*[a-zA-Z0-9]$', host):
+                # 主机名验证: 只允许字母、数字、连字符和点
+                return False, "主机名格式不正确"
+            
+            # 验证用户名
+            if not username or not username.strip():
+                return False, "用户名不能为空"
+            
+            username = username.strip()
+            # 用户名格式验证: 只允许字母、数字、下划线和连字符
+            if not re.match(r'^[a-zA-Z0-9_\-]+$', username):
+                return False, "用户名格式不正确(只允许字母、数字、下划线和连字符)"
+            
+            # 验证远程路径
+            if not remote_path or not remote_path.strip():
+                return False, "远程路径不能为空"
+            
+            remote_path = remote_path.strip()
+            if not remote_path.startswith('/'):
+                return False, "远程路径必须以/开头"
+            
+            # 验证本地路径
+            if not local_path or not local_path.strip():
+                return False, "本地路径不能为空"
+            
+            local_path = local_path.strip()
+            # 本地路径可以是绝对路径或相对路径
+            
+            return True, None
+            
+        except Exception as e:
+            return False, f"配置验证出错: {str(e)}"
+    
+    def on_sshfs_config_changed(self, *args):
+        """SSHFS配置变化时的回调"""
+        try:
+            # 只更新SSHFS命令,不自动保存历史记录
+            # 历史记录只在点击"挂载"按钮且验证通过后才保存
+            self.update_sshfs_command()
+                
+        except Exception as e:
+            self.log_message(f"[SSHFS] 配置变化处理失败: {str(e)}")
 
     def get_local_ip(self):
         """获取本机IP地址"""
@@ -2548,9 +2864,22 @@ class DeepinProjectDownloader:
                 remote_path = self.sshfs_remote_path_var.get().strip()
                 local_path = self.sshfs_local_path_var.get().strip()
                 
+                # 验证必填字段
                 if not host or not remote_path or not local_path:
                     self.message_queue.put(("log", "[SSHFS] [错误] 请填写完整的主机地址、远程路径和本地路径"))
+                    self.message_queue.put(("show_warning", "配置不完整", "请填写完整的主机地址、远程路径和本地路径"))
                     return
+                
+                # 验证配置格式
+                is_valid, error_msg = self.validate_sshfs_config(host, username, remote_path, local_path)
+                if not is_valid:
+                    self.message_queue.put(("log", f"[SSHFS] [错误] 配置验证失败: {error_msg}"))
+                    self.message_queue.put(("show_warning", "配置验证失败", error_msg))
+                    return
+                
+                # 验证通过,保存到历史记录
+                self.message_queue.put(("log", f"[SSHFS历史] 配置验证通过,保存到历史记录"))
+                self.add_sshfs_history_entry(host, username, remote_path, local_path)
                 
                 self.message_queue.put(("progress", "start"))
                 self.message_queue.put(("status", "正在挂载SSHFS..."))
@@ -3382,6 +3711,107 @@ if {{[llength $result] >= 4}} {{
             self.log_message(f"[SSHFS] 终端语言已切换为: {language}")
         except Exception as e:
             self.log_message(f"[SSHFS] 语言切换失败: {str(e)}")
+    
+    def refresh_sshfs_history(self):
+        """刷新SSHFS历史记录下拉框"""
+        try:
+            history = self.load_sshfs_history()
+            
+            if not history:
+                # 没有历史记录
+                self.sshfs_history_combo['values'] = ["无历史记录"]
+                self.sshfs_history_var.set("无历史记录")
+                self.sshfs_history_combo.config(state="disabled")
+                self.log_message("[SSHFS历史] 暂无历史记录")
+            else:
+                # 生成历史记录显示文本
+                history_items = []
+                for i, entry in enumerate(history):
+                    # 格式: [时间] 用户@主机:远程路径 -> 本地路径
+                    display_text = f"[{entry['timestamp']}] "
+                    if entry['username']:
+                        display_text += f"{entry['username']}@"
+                    display_text += f"{entry['host']}:{entry['remote_path']} -> {entry['local_path']}"
+                    history_items.append(display_text)
+                
+                self.sshfs_history_combo['values'] = history_items
+                self.sshfs_history_combo.config(state="readonly")
+                
+                # 默认不选中任何历史记录
+                if self.sshfs_history_var.get() == "无历史记录" or not self.sshfs_history_var.get():
+                    self.sshfs_history_var.set("")
+                
+                self.log_message(f"[SSHFS历史] 已刷新历史记录列表，共 {len(history)} 条")
+                
+        except Exception as e:
+            self.log_message(f"[SSHFS历史] 刷新历史记录失败: {str(e)}")
+    
+    def on_sshfs_history_selected(self, event=None):
+        """历史记录选择变化时的处理"""
+        try:
+            selected_index = self.sshfs_history_combo.current()
+            
+            if selected_index < 0 or selected_index >= len(self.sshfs_history):
+                return
+            
+            # 获取选中的历史记录
+            entry = self.sshfs_history[selected_index]
+            
+            # 应用历史记录到配置
+            if entry['host']:
+                self.sshfs_host_var.set(entry['host'])
+            if entry['username']:
+                self.sshfs_username_var.set(entry['username'])
+            if entry['remote_path']:
+                self.sshfs_remote_path_var.set(entry['remote_path'])
+            if entry['local_path']:
+                self.sshfs_local_path_var.set(entry['local_path'])
+            
+            self.log_message(f"[SSHFS历史] 已应用历史记录: {entry['timestamp']}")
+            
+        except Exception as e:
+            self.log_message(f"[SSHFS历史] 应用历史记录失败: {str(e)}")
+    
+    def delete_sshfs_history_entry(self):
+        """删除当前选中的历史记录"""
+        try:
+            selected_index = self.sshfs_history_combo.current()
+            
+            # 检查是否有选中的历史记录
+            if selected_index < 0 or selected_index >= len(self.sshfs_history):
+                messagebox.showwarning("警告", "请先选择要删除的历史记录")
+                return
+            
+            # 获取要删除的历史记录
+            entry_to_delete = self.sshfs_history[selected_index]
+            entry_info = f"{entry_to_delete['timestamp']} - "
+            if entry_to_delete['username']:
+                entry_info += f"{entry_to_delete['username']}@"
+            entry_info += f"{entry_to_delete['host']}:{entry_to_delete['remote_path']}"
+            
+            # 确认删除
+            response = messagebox.askyesno(
+                "确认删除",
+                f"确定要删除以下历史记录吗?\n\n{entry_info}\n\n此操作不可恢复!",
+                icon="warning"
+            )
+            
+            if not response:
+                return
+            
+            # 删除历史记录
+            del self.sshfs_history[selected_index]
+            
+            # 保存到文件
+            self.save_sshfs_history()
+            
+            # 刷新历史记录下拉框
+            self.refresh_sshfs_history()
+            
+            self.log_message(f"[SSHFS历史] 已删除历史记录: {entry_info}")
+            
+        except Exception as e:
+            self.log_message(f"[SSHFS历史] 删除历史记录失败: {str(e)}")
 
     def create_sources_management(self, parent):
         """创建软件源管理界面"""
@@ -3476,8 +3906,12 @@ if {{[llength $result] >= 4}} {{
             text_frame.columnconfigure(0, weight=1)
             text_frame.rowconfigure(0, weight=1)
             
-            # 创建文本编辑器带滚动条
-            text_editor = tk.Text(text_frame, wrap=tk.NONE, font=("Courier", 10))
+            # 使用通用方法创建增强的文本编辑器
+            text_editor = self.create_enhanced_text_editor(
+                text_frame,
+                wrap=tk.NONE,
+                font=("Courier", 10)
+            )
             v_scrollbar = ttk.Scrollbar(text_frame, orient=tk.VERTICAL, command=text_editor.yview)
             h_scrollbar = ttk.Scrollbar(text_frame, orient=tk.HORIZONTAL, command=text_editor.xview)
             
@@ -3812,18 +4246,18 @@ if {{[llength $result] >= 4}} {{
         for project_name in self.filtered_projects:
             # 选择框
             cb = ttk.Checkbutton(self.project_content_frame, variable=self.project_vars[project_name])
-            cb.grid(row=row, column=0, padx=5, pady=2)
+            cb.grid(row=row, column=0, sticky="ew", padx=5, pady=2)
             
             # 项目名称
             ttk.Label(self.project_content_frame, text=project_name, style='Info.TLabel').grid(
-                row=row, column=1, sticky="w", padx=5, pady=3)
+                row=row, column=1, sticky="ew", padx=5, pady=3)
             
             # 本地状态
             exists = self.check_project_exists(project_name)
             status_text = "已下载" if exists else "未下载"
             status_color = "green" if exists else "red"
             status_label = ttk.Label(self.project_content_frame, text=status_text, foreground=status_color)
-            status_label.grid(row=row, column=2, sticky="w", padx=5, pady=2)
+            status_label.grid(row=row, column=2, sticky="ew", padx=5, pady=3)
             self.project_status_labels[project_name] = status_label
             
             # 分支选择
@@ -4792,21 +5226,19 @@ if {{[llength $result] >= 4}} {{
                 return  # 允许这些组合键
         # 阻止其他所有按键
         return 'break'
-    def _show_log_context_menu(self, event):
-        """显示日志文本框右键菜单"""
-        context_menu = tk.Menu(self.root, tearoff=0)
-        context_menu.add_command(label="复制", command=self._copy_log_text)
-        context_menu.add_command(label="全选", command=self._select_all_log_text)
-        context_menu.add_separator()
-        context_menu.add_command(label="清空日志", command=self.clear_log)
-        
+    
+    def _log_clear(self):
+        """清除所有日志"""
         try:
-            context_menu.tk_popup(event.x_root, event.y_root)
-        finally:
-            context_menu.grab_release()
+            self.log_text.config(state=tk.NORMAL)
+            self.log_text.delete(1.0, tk.END)
+            if hasattr(self, 'status_var') and self.status_var:
+                self.status_var.set("日志已清空")
+        except Exception as e:
+            print(f"清除日志失败: {e}")
     
     def _copy_log_text(self):
-        """复制选中的日志文本"""
+        """复制选中的日志文本（已废弃，保留用于兼容性）"""
         try:
             selected_text = self.log_text.selection_get()
             self.root.clipboard_clear()
@@ -4816,7 +5248,7 @@ if {{[llength $result] >= 4}} {{
             pass
     
     def _select_all_log_text(self):
-        """全选日志文本"""
+        """全选日志文本（已废弃，保留用于兼容性）"""
         self.log_text.tag_add(tk.SEL, "1.0", tk.END)
         self.log_text.mark_set(tk.INSERT, "1.0")
         self.log_text.see(tk.INSERT)
@@ -4839,8 +5271,10 @@ if {{[llength $result] >= 4}} {{
     
     def clear_log(self):
         """清空日志"""
-        self.log_text.delete(1.0, tk.END)
-        self.status_var.set("日志已清空")
+        if hasattr(self, 'log_text') and self.log_text:
+            self.log_text.delete(1.0, tk.END)
+        if hasattr(self, 'status_var') and self.status_var:
+            self.status_var.set("日志已清空")
     
     def show_progress(self, project_name, progress=None):
         """显示项目进度条"""
@@ -5666,6 +6100,10 @@ if {{[llength $result] >= 4}} {{
                 elif message[0] == "ssh_key_status":
                     status = message[1]
                     self.ssh_key_status_var.set(status)
+                elif message[0] == "show_warning":
+                    title = message[1] if len(message) > 1 else "警告"
+                    message_text = message[2] if len(message) > 2 else ""
+                    messagebox.showwarning(title, message_text)
                         
         except queue.Empty:
             pass
@@ -5733,8 +6171,12 @@ if {{[llength $result] >= 4}} {{
         self.host_file_label = ttk.Label(host_config_tab, text="/etc/hosts", style='FilePath.TLabel')
         self.host_file_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
         
-        # 文本编辑框
-        self.host_text = scrolledtext.ScrolledText(host_config_tab, wrap=tk.WORD, height=20)
+        # 文本编辑框 - 使用通用增强方法
+        self.host_text = self.create_enhanced_text_editor(
+            host_config_tab,
+            wrap=tk.WORD,
+            height=20
+        )
         self.host_text.grid(row=1, column=0, sticky="nsew")
         
         # 存储编辑器引用
@@ -5772,8 +6214,12 @@ if {{[llength $result] >= 4}} {{
         ping_result_frame.columnconfigure(0, weight=1)
         ping_result_frame.rowconfigure(0, weight=1)
         
-        # Ping结果文本框
-        self.ping_result_text = scrolledtext.ScrolledText(ping_result_frame, wrap=tk.WORD, height=15)
+        # Ping结果文本框 - 使用通用增强方法
+        self.ping_result_text = self.create_enhanced_text_editor(
+            ping_result_frame,
+            wrap=tk.WORD,
+            height=15
+        )
         self.ping_result_text.grid(row=0, column=0, sticky="nsew")
 
     def check_and_load_hosts(self):

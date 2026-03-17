@@ -94,8 +94,8 @@ show_built_packages() {
         project_name=$(basename "$(pwd)")
     fi
     
-    # 获取当前构建产生的deb包（通过时间戳筛选最近5分钟内创建的包）
-    local recent_debs=$(find .. -maxdepth 1 -name "*.deb" -mmin -5 2>/dev/null || true)
+    # 获取当前构建产生的deb包（通过时间戳筛选最近2分钟内创建的包）
+    local recent_debs=$(find .. -maxdepth 1 -name "*.deb" -mmin -2 2>/dev/null || true)
     
     # 如果没有找到最近的包，则尝试通过项目名筛选
     if [ -z "$recent_debs" ]; then
@@ -106,6 +106,12 @@ show_built_packages() {
         log "构建产物:"
         ls -la $recent_debs
         echo "$recent_debs"
+        
+        # 生成安装命令
+        local deb_files=$(echo "$recent_debs" | tr '\n' ' ')
+        echo ""
+        log " sudo apt install $deb_files"
+        log " sudo dpkg -i $deb_files"
     else
         error "未找到当前项目的构建产物"
     fi
