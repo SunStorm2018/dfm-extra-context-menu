@@ -791,7 +791,8 @@ class DeepinProjectDownloader:
         style.configure('Primary.TButton', font=('Arial', 9, 'bold'), background='#F8F8F8', padding=(8, 4))
         style.configure('Success.TButton', font=('Arial', 9, 'bold'), background='#E4E4E4', padding=(8, 4))
         style.configure('Warning.TButton', font=('Arial', 9, 'bold'), background='#E4E4E4', padding=(8, 4))
-        style.configure('Danger.TButton', font=('Arial', 9, 'bold'), background='#d9534f', padding=(8, 4))
+        style.configure('Danger.TButton', font=('Arial', 9, 'bold'), background='#d9534f', foreground='white', padding=(4, 4))
+        style.map('Danger.TButton', background=[('active', '#c9302c'), ('pressed', '#c9302c')])
         
         # 框架样式
         style.configure('Card.TFrame', relief='solid', borderwidth=1, background='#ecf0f1')
@@ -802,8 +803,8 @@ class DeepinProjectDownloader:
         style.configure('Title.TLabelframe.Label', font=('Arial', 10, 'bold'), foreground='#2c3e50')
         
         # 进度条样式
-        style.configure('Custom.Horizontal.TProgressbar', 
-                       background='#4a90e2', 
+        style.configure('Custom.Horizontal.TProgressbar',
+                       background='#4a90e2',
                        troughcolor='#ecf0f1',
                        borderwidth=0,
                        lightcolor='#4a90e2',
@@ -1704,14 +1705,6 @@ class DeepinProjectDownloader:
             row=6, column=2, padx=(5, 10), pady=2
         )
         
-        # 终端语言选择
-        ttk.Label(self.sshfs_content_frame, text="终端语言:").grid(row=7, column=0, padx=(10, 5), pady=2, sticky="w")
-        self.sshfs_language_var = tk.StringVar(value="English")
-        language_combo = ttk.Combobox(self.sshfs_content_frame, textvariable=self.sshfs_language_var,
-                                     values=["English", "中文"], state="readonly", width=10)
-        language_combo.grid(row=7, column=1, padx=(0, 5), pady=2, sticky="w")
-        language_combo.bind('<<ComboboxSelected>>', self.on_language_changed)
-        
         # 初始化SSHFS配置
         self.root.after(2000, self.init_sshfs_config)
         # 刷新历史记录下拉框
@@ -1932,7 +1925,7 @@ class DeepinProjectDownloader:
         
         # 添加清空日志按钮
         clear_log_btn = ttk.Button(log_frame, text="清空日志", command=self._log_clear, style='Danger.TButton')
-        clear_log_btn.grid(row=0, column=0, sticky="se", padx=18, pady=10)
+        clear_log_btn.grid(row=0, column=0, sticky="se", padx=18, pady=8)
         
         # 进度条
         self.progress = ttk.Progressbar(main_frame, mode='indeterminate', style='Custom.Horizontal.TProgressbar')
@@ -2811,23 +2804,56 @@ class DeepinProjectDownloader:
             threading.Thread(target=install_task, daemon=True).start()
 
     def check_sshfs_status(self):
-        """检查SSHFS状态"""
+        """检查SSHFS连接状态"""
         def check_task():
             try:
                 self.message_queue.put(("sshfs_status", "检测中..."))
                 self.message_queue.put(("sshfs_title", "SSHFS 配置 - 检测中..."))
                 
-                # 检查sshfs命令是否存在
-                result = subprocess.run(["which", "sshfs"], capture_output=True, text=True, timeout=10)
+                # 检查是否有SSHFS进程正在运行
+                result = subprocess.run(["pgrep", "-f", "sshfs"], capture_output=True, text=True, timeout=10)
                 
                 if result.returncode == 0:
-                    self.message_queue.put(("sshfs_status", "已安装"))
-                    self.message_queue.put(("sshfs_title", "SSHFS 配置 - 已安装"))
-                    self.message_queue.put(("log", "[SSHFS] [信息] SSHFS已安装"))
+                    # 有SSHFS进程在运行,获取详细信息
+                    pids = result.stdout.strip().split('\n')
+                    
+                    # 获取每个SSHFS进程的详细信息,提取主机IP
+                    import re
+                    connected_hosts = []
+                    
+                    for pid in pids:
+                        try:
+                            # 获取进程命令行
+                            cmd_result = subprocess.run(["ps", "-p", pid, "-o", "args="],
+                                                      capture_output=True, text=True, timeout=5)
+                            if cmd_result.returncode == 0:
+                                cmd_line = cmd_result.stdout.strip()
+                                # 从命令行中提取主机信息
+                                # 格式: sshfs user@host:path /local/path
+                                match = re.search(r'sshfs\s+(\S+@)?([\d.]+|\S+):', cmd_line)
+                                if match:
+                                    host = match.group(2)
+                                    if host not in connected_hosts:
+                                        connected_hosts.append(host)
+                        except:
+                            continue
+                    
+                    if connected_hosts:
+                        # 有连接的主机
+                        hosts_str = '/'.join(connected_hosts)
+                        self.message_queue.put(("sshfs_status", f"已连接: {hosts_str}"))
+                        self.message_queue.put(("sshfs_title", f"SSHFS 配置 - 已连接({len(connected_hosts)}个主机)"))
+                        self.message_queue.put(("log", f"[SSHFS] [信息] 已连接到 {len(connected_hosts)} 个主机: {hosts_str}"))
+                    else:
+                        # 有进程但无法提取主机信息
+                        self.message_queue.put(("sshfs_status", "已连接"))
+                        self.message_queue.put(("sshfs_title", "SSHFS 配置 - 已连接"))
+                        self.message_queue.put(("log", f"[SSHFS] [信息] SSHFS进程运行中({len(pids)}个)"))
                 else:
-                    self.message_queue.put(("sshfs_status", "未安装"))
-                    self.message_queue.put(("sshfs_title", "SSHFS 配置 - 未安装"))
-                    self.message_queue.put(("log", "[SSHFS] [信息] SSHFS未安装"))
+                    # 没有SSHFS进程
+                    self.message_queue.put(("sshfs_status", "未连接"))
+                    self.message_queue.put(("sshfs_title", "SSHFS 配置 - 未连接"))
+                    self.message_queue.put(("log", "[SSHFS] [信息] SSHFS未连接"))
                 
             except Exception as e:
                 self.message_queue.put(("sshfs_status", "检测失败"))
@@ -2856,7 +2882,7 @@ class DeepinProjectDownloader:
             self.log_message(f"[SSHFS] 打开文件夹失败: {str(e)}")
 
     def mount_sshfs(self):
-        """挂载SSHFS"""
+        """挂载SSHFS（优化版：直接弹出密码对话框，不依赖终端）"""
         def mount_task():
             try:
                 host = self.sshfs_host_var.get().strip()
@@ -2893,23 +2919,25 @@ class DeepinProjectDownloader:
                 # 检查是否已经挂载
                 if os.path.ismount(local_path):
                     self.message_queue.put(("log", "[SSHFS] [警告] 该路径已经挂载，请先取消挂载"))
+                    self.message_queue.put(("progress", "stop"))
                     return
                 
-                # 执行挂载命令 - 使用交互式终端方法
+                # 构建挂载命令
                 if username:
                     mount_cmd = ["sshfs", f"{username}@{host}:{remote_path}", local_path]
                 else:
                     mount_cmd = ["sshfs", f"{host}:{remote_path}", local_path]
                 self.message_queue.put(("log", f"[SSHFS] [执行] 命令: {' '.join(mount_cmd)}"))
                 
-                # 使用交互式终端方法
-                self.execute_interactive_sshfs(mount_cmd)
+                # 缓存挂载命令
+                self.sshfs_mount_cmd_cache = mount_cmd
+                
+                # 在主线程中显示密码对话框
+                self.root.after(0, self.show_password_dialog_and_mount)
                 
             except Exception as e:
                 self.message_queue.put(("log", f"[SSHFS] [错误] 挂载SSHFS时出错: {str(e)}"))
-            finally:
                 self.message_queue.put(("progress", "stop"))
-                self.message_queue.put(("status", "SSHFS挂载完成"))
         
         # 确认对话框
         response = messagebox.askyesno(
@@ -2921,51 +2949,44 @@ class DeepinProjectDownloader:
         
         if response:
             threading.Thread(target=mount_task, daemon=True).start()
-
-    def fallback_mount_sshfs(self, mount_cmd):
-        """回退挂载方法 - 使用缓存的密码执行sshfs命令"""
+    
+    def show_password_dialog_and_mount(self):
+        """显示密码对话框并执行挂载"""
         try:
-            self.message_queue.put(("log", "[SSHFS] [回退] 尝试使用缓存密码直接执行挂载命令"))
+            host = self.sshfs_host_var.get().strip()
+            username = self.sshfs_username_var.get().strip()
             
-            # 检查是否有缓存的密码
-            if not hasattr(self, 'sshfs_password_cache') or self.sshfs_password_cache is None:
-                self.message_queue.put(("log", "[SSHFS] [错误] 回退挂载失败：没有可用的密码"))
-                return
-            
-            password = self.sshfs_password_cache
-            
-            # 使用expect脚本作为回退方案
-            self.message_queue.put(("log", "[SSHFS] [回退] 使用expect脚本作为回退方案..."))
-            self.execute_with_expect(mount_cmd, password)
-                
-        except Exception as e:
-            self.message_queue.put(("log", f"[SSHFS] [错误] 回退挂载失败: {str(e)}"))
-
-    def show_password_dialog(self, host, username):
-        """显示密码输入对话框（完全非阻塞版本）"""
-        try:
-            # 创建密码输入对话框
+            # 显示密码输入对话框
             dialog = tk.Toplevel(self.root)
             dialog.title("SSH密码输入")
-            dialog.geometry("400x200")
+            dialog.geometry("450x220")
             dialog.resizable(False, False)
             dialog.transient(self.root)
             dialog.grab_set()
             
-            # 居中显示
+            # 在应用窗口中间显示
             dialog.update_idletasks()
-            x = (dialog.winfo_screenwidth() // 2) - (400 // 2)
-            y = (dialog.winfo_screenheight() // 2) - (200 // 2)
-            dialog.geometry(f"400x200+{x}+{y}")
+            # 获取主窗口的位置和大小
+            root_x = self.root.winfo_x()
+            root_y = self.root.winfo_y()
+            root_width = self.root.winfo_width()
+            root_height = self.root.winfo_height()
+            
+            # 计算对话框在主窗口中间的位置
+            dialog_width = 450
+            dialog_height = 220
+            x = root_x + (root_width // 2) - (dialog_width // 2)
+            y = root_y + (root_height // 2) - (dialog_height // 2)
+            dialog.geometry(f"{dialog_width}x{dialog_height}+{x}+{y}")
             
             # 连接信息
             info_text = f"连接到: {username}@{host}" if username else f"连接到: {host}"
-            ttk.Label(dialog, text=info_text, font=("", 10, "bold")).pack(pady=(20, 10))
+            ttk.Label(dialog, text=info_text, font=("", 11, "bold")).pack(pady=(20, 10))
             
             # 密码输入框
             ttk.Label(dialog, text="请输入SSH密码:").pack(pady=(10, 5))
             password_var = tk.StringVar()
-            password_entry = ttk.Entry(dialog, textvariable=password_var, show="*", width=30)
+            password_entry = ttk.Entry(dialog, textvariable=password_var, show="*", width=35)
             password_entry.pack(pady=(0, 20))
             password_entry.focus()
             
@@ -2973,7 +2994,6 @@ class DeepinProjectDownloader:
             button_frame = ttk.Frame(dialog)
             button_frame.pack(pady=(0, 20))
             
-            # 使用回调机制，不阻塞
             def on_ok():
                 """确定按钮回调"""
                 password = password_var.get().strip()
@@ -2981,24 +3001,32 @@ class DeepinProjectDownloader:
                     messagebox.showwarning("警告", "密码不能为空", parent=dialog)
                     return
                 
-                # 将密码存储到缓存变量
-                self.sshfs_password_cache = password
-                self.message_queue.put(("log", "[SSHFS] [信息] 密码已获取，开始执行挂载..."))
-                
                 # 关闭对话框
                 dialog.destroy()
                 
-                # 异步执行挂载（避免阻塞）
-                self.root.after(100, self.execute_cached_mount)
+                # 在后台线程中执行挂载
+                def mount_with_password():
+                    try:
+                        self.message_queue.put(("log", "[SSHFS] [信息] 密码已获取，开始执行挂载..."))
+                        
+                        # 使用密码执行挂载
+                        self.execute_sshfs_with_password(self.sshfs_mount_cmd_cache, password)
+                        
+                    except Exception as e:
+                        self.message_queue.put(("log", f"[SSHFS] [错误] 挂载失败: {str(e)}"))
+                        self.message_queue.put(("progress", "stop"))
+                
+                threading.Thread(target=mount_with_password, daemon=True).start()
             
             def on_cancel():
                 """取消按钮回调"""
                 self.message_queue.put(("log", "[SSHFS] [取消] 用户取消了密码输入"))
+                self.message_queue.put(("progress", "stop"))
                 dialog.destroy()
             
             # 确定和取消按钮
-            ttk.Button(button_frame, text="确定", command=on_ok).pack(side="left", padx=(0, 10))
-            ttk.Button(button_frame, text="取消", command=on_cancel).pack(side="left")
+            ttk.Button(button_frame, text="确定", command=on_ok, width=10).pack(side="left", padx=(0, 15))
+            ttk.Button(button_frame, text="取消", command=on_cancel, width=10).pack(side="left")
             
             # 绑定回车键和ESC键
             password_entry.bind('<Return>', lambda e: on_ok())
@@ -3006,71 +3034,121 @@ class DeepinProjectDownloader:
             
             # 设置对话框为模态
             dialog.focus_force()
-            dialog.grab_set()
-            
-            # 不等待，直接返回对话框对象
-            return dialog
             
         except Exception as e:
-            self.log_message(f"[SSHFS] 密码对话框创建失败: {str(e)}")
-            return None
-
-
+            self.message_queue.put(("log", f"[SSHFS] [错误] 密码对话框创建失败: {str(e)}"))
+            self.message_queue.put(("progress", "stop"))
 
     def execute_sshfs_with_password(self, mount_cmd, password):
-        """使用密码执行SSHFS挂载"""
+        """使用密码执行SSHFS挂载（优化版：使用成功的ok.py逻辑）"""
         try:
             self.message_queue.put(("log", "[SSHFS] [信息] 正在使用密码执行挂载..."))
             
-            # 使用sshpass来传递密码（如果可用）
-            if self.check_sshpass_available():
-                self.execute_with_sshpass(mount_cmd, password)
-            else:
-                # 回退到使用expect脚本
-                self.execute_with_expect(mount_cmd, password)
+            # 获取挂载参数
+            host = self.sshfs_host_var.get().strip()
+            username = self.sshfs_username_var.get().strip()
+            remote_path = self.sshfs_remote_path_var.get().strip()
+            local_path = self.sshfs_local_path_var.get().strip()
+            
+            # ✅ 终极正确命令：-f 前台等待挂载完成 + 不超时
+            cmd = [
+                "sshpass", "-p", password,
+                "sshfs",
+                f"{username}@{host}:{remote_path}",
+                local_path,
+                "-o", "StrictHostKeyChecking=no",
+                "-f"  # 必须保留，等待真正挂载成功
+            ]
+            
+            self.message_queue.put(("log", f"[SSHFS] [执行] 命令: sshpass -p *** {' '.join(cmd[2:])}"))
+            
+            # 后台运行，不设置 timeout，永不杀死进程
+            def run_sshfs():
+                try:
+                    result = subprocess.run(cmd, capture_output=True, text=True)
+                    if result.returncode != 0:
+                        error_msg = result.stderr.strip() if result.stderr else "未知错误"
+                        self.message_queue.put(("log", f"[SSHFS] [错误] 挂载失败: {error_msg}"))
+                except Exception as e:
+                    self.message_queue.put(("log", f"[SSHFS] [错误] 挂载异常: {str(e)}"))
+            
+            # 启动 sshfs 后台线程
+            threading.Thread(target=run_sshfs, daemon=True).start()
+            
+            # 等待 3 秒确保挂载完成
+            import time
+            time.sleep(1)
+            
+            self.message_queue.put(("log", "✅ 挂载指令已发送（保持连接）"))
+            
+            # 验证挂载状态
+            self.verify_mount_status(mount_cmd)
                 
         except Exception as e:
             self.message_queue.put(("log", f"[SSHFS] [错误] 密码挂载失败: {str(e)}"))
-            # 回退到原来的方法
-            self.fallback_mount_sshfs(mount_cmd)
+            self.message_queue.put(("progress", "stop"))
+            self.message_queue.put(("sshfs_status", "挂载失败"))
+            self.message_queue.put(("sshfs_title", "SSHFS 配置 - 挂载失败"))
     
-    def execute_sshfs_with_cached_password(self, mount_cmd):
-        """使用缓存的密码执行SSHFS挂载"""
+    def execute_with_sshpass_background(self, mount_cmd, password):
+        """使用sshpass执行后台挂载（不依赖终端）"""
         try:
-            if not hasattr(self, 'sshfs_password_cache') or self.sshfs_password_cache is None:
-                self.message_queue.put(("log", "[SSHFS] [错误] 密码缓存为空，无法执行挂载"))
-                return
+            import signal
             
-            password = self.sshfs_password_cache
-            self.message_queue.put(("log", "[SSHFS] [信息] 使用缓存的密码执行挂载..."))
+            # 构建sshpass命令
+            sshpass_cmd = ["sshpass", "-p", password] + mount_cmd
             
-            # 首先尝试使用sshpass
-            if self.check_sshpass_available():
-                self.execute_with_sshpass(mount_cmd, password)
+            self.message_queue.put(("log", "[SSHFS] [信息] 使用sshpass执行后台挂载..."))
+            
+            # 启动后台进程，不等待输出
+            # 使用 Popen 并设置进程组，使其独立于父进程
+            process = subprocess.Popen(
+                sshpass_cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True  # 创建新的会话，使进程独立
+            )
+            
+            # 等待一小段时间让进程启动
+            import time
+            time.sleep(1)
+            
+            # 检查进程是否还在运行
+            poll_result = process.poll()
+            
+            if poll_result is None:
+                # 进程仍在运行，说明挂载可能成功
+                self.message_queue.put(("log", "[SSHFS] [成功] SSHFS挂载进程已启动"))
+                self.message_queue.put(("log", f"[SSHFS] [信息] 挂载进程PID: {process.pid}"))
+                
+                # 验证挂载状态
+                self.root.after(3000, lambda: self.verify_mount_status(mount_cmd))
             else:
-                # 如果没有sshpass，使用expect脚本
-                self.execute_with_expect(mount_cmd, password)
+                # 进程已退出，可能失败
+                stderr_output = ""
+                if process.stderr:
+                    stderr_output = process.stderr.read().decode('utf-8', errors='ignore')
+                
+                self.message_queue.put(("log", f"[SSHFS] [失败] SSHFS挂载进程退出，返回码: {poll_result}"))
+                if stderr_output:
+                    self.message_queue.put(("log", f"[SSHFS] [错误] {stderr_output.strip()}"))
+                
+                # sshpass失败，不再回退
+                self.message_queue.put(("log", "[SSHFS] [失败] sshpass挂载失败，请检查密码和网络连接"))
                 
         except Exception as e:
-            self.message_queue.put(("log", f"[SSHFS] [错误] 使用缓存密码执行SSHFS挂载失败: {str(e)}"))
-            # 最后尝试回退方法
-            self.fallback_mount_sshfs(mount_cmd)
-        finally:
-            # 清除密码缓存（安全考虑）
-            self.sshfs_password_cache = None
+            self.message_queue.put(("log", f"[SSHFS] [错误] sshpass后台挂载失败: {str(e)}"))
     
     def execute_interactive_sshfs(self, mount_cmd):
         """执行交互式SSHFS挂载（在终端中）"""
         try:
             self.message_queue.put(("log", "[SSHFS] [信息] 启动交互式SSHFS挂载..."))
             
-            # 检查用户是否设置了中文显示
-            use_chinese = getattr(self, 'sshfs_use_chinese', False)
-            
             # 检查可用的终端模拟器
             terminal_emulators = [
                 "gnome-terminal",
-                "konsole", 
+                "konsole",
                 "xfce4-terminal",
                 "lxterminal",
                 "mate-terminal",
@@ -3097,64 +3175,8 @@ class DeepinProjectDownloader:
             # 构建在终端中执行的命令
             sshfs_cmd_str = ' '.join(mount_cmd)
             
-            # 根据语言设置创建脚本
-            if use_chinese:
-                # 中文版本
-                terminal_script = f"""
-echo "=== SSHFS 挂载进程 ==="
-echo "命令: {sshfs_cmd_str}"
-echo ""
-echo "请输入SSH密码:"
-
-# 执行sshfs命令，让用户输入密码
-{sshfs_cmd_str} &
-sshfs_pid=$!
-
-echo ""
-echo "SSHFS进程已启动 (PID: $sshfs_pid)"
-echo "等待挂载完成..."
-
-# 等待挂载完成
-sleep 4
-
-# 检查挂载状态
-if mountpoint -q "{mount_cmd[-1]}"; then
-    echo "成功: 挂载完成!"
-    echo "挂载点: {mount_cmd[-1]}"
-    echo "进程ID: $sshfs_pid"
-    echo ""
-    echo "正在处理进程分离..."
-    
-    # 使用disown让进程不依赖终端
-    disown $sshfs_pid 2>/dev/null || echo "注意: disown命令不可用，但挂载可能仍然有效"
-    
-    echo "进程分离完成!"
-    echo "现在可以安全关闭此终端窗口。"
-    echo "挂载将保持有效。"
-    
-else
-    echo "失败: 挂载验证失败，请检查:"
-    echo "  1. 网络连接"
-    echo "  2. SSH用户名和密码"
-    echo "  3. 远程服务器可访问性"
-    echo "  4. 本地挂载目录权限"
-    echo ""
-    echo "进程状态:"
-    if kill -0 $sshfs_pid 2>/dev/null; then
-        echo "  SSHFS进程仍在运行，可能需要更多时间"
-        echo "  请稍后在主程序中检查挂载状态"
-    else
-        echo "  SSHFS进程已退出，挂载失败"
-    fi
-fi
-
-echo ""
-echo "按回车键关闭此窗口..."
-read
-"""
-            else:
-                # 英文版本
-                terminal_script = f"""
+            # 创建脚本（英文版本）
+            terminal_script = f"""
 echo "=== SSHFS Mount Process ==="
 echo "Command: {sshfs_cmd_str}"
 echo ""
@@ -3208,20 +3230,16 @@ read
 """
             
             # 根据不同的终端模拟器使用不同的参数
-            # 设置UTF-8环境变量以支持中文显示
-            env_vars = "export LANG=zh_CN.UTF-8; export LC_ALL=zh_CN.UTF-8; "
-            full_script = env_vars + terminal_script
-            
             if terminal_cmd == "gnome-terminal":
-                cmd = [terminal_cmd, "--", "bash", "-c", full_script]
+                cmd = [terminal_cmd, "--", "bash", "-c", terminal_script]
             elif terminal_cmd == "konsole":
-                cmd = [terminal_cmd, "-e", "bash", "-c", full_script]
+                cmd = [terminal_cmd, "-e", "bash", "-c", terminal_script]
             elif terminal_cmd in ["xfce4-terminal", "mate-terminal"]:
-                cmd = [terminal_cmd, "-e", f"bash -c '{full_script}'"]
+                cmd = [terminal_cmd, "-e", f"bash -c '{terminal_script}'"]
             elif terminal_cmd == "terminator":
-                cmd = [terminal_cmd, "-e", f"bash -c '{full_script}'"]
+                cmd = [terminal_cmd, "-e", f"bash -c '{terminal_script}'"]
             else:  # xterm等
-                cmd = [terminal_cmd, "-e", "bash", "-c", full_script]
+                cmd = [terminal_cmd, "-e", "bash", "-c", terminal_script]
             
             self.message_queue.put(("log", f"[SSHFS] [信息] 启动终端命令: {' '.join(cmd)}"))
             
@@ -3242,32 +3260,6 @@ read
         except Exception as e:
             self.message_queue.put(("log", f"[SSHFS] [错误] 交互式挂载失败: {str(e)}"))
             return False
-
-    def execute_cached_mount(self):
-        """执行缓存的挂载命令"""
-        try:
-            if not hasattr(self, 'sshfs_mount_cmd_cache') or self.sshfs_mount_cmd_cache is None:
-                self.message_queue.put(("log", "[SSHFS] [错误] 挂载命令缓存为空"))
-                return
-            
-            if not hasattr(self, 'sshfs_password_cache') or self.sshfs_password_cache is None:
-                self.message_queue.put(("log", "[SSHFS] [错误] 密码缓存为空"))
-                return
-            
-            mount_cmd = self.sshfs_mount_cmd_cache
-            password = self.sshfs_password_cache
-            
-            self.message_queue.put(("log", "[SSHFS] [信息] 开始执行缓存的挂载命令..."))
-            
-            # 使用缓存的密码执行挂载
-            self.execute_sshfs_with_password(mount_cmd, password)
-            
-        except Exception as e:
-            self.message_queue.put(("log", f"[SSHFS] [错误] 执行缓存挂载失败: {str(e)}"))
-        finally:
-            # 清除缓存
-            self.sshfs_mount_cmd_cache = None
-            self.sshfs_password_cache = None
 
     def check_sshpass_available(self):
         """检查sshpass是否可用"""
@@ -3299,149 +3291,10 @@ read
             else:
                 error_msg = result.stderr.strip() if result.stderr else "未知错误"
                 self.message_queue.put(("log", f"[SSHFS] [失败] SSHFS挂载失败: {error_msg}"))
-                
-                # 如果sshpass失败，尝试使用expect
-                self.message_queue.put(("log", "[SSHFS] [回退] sshpass失败，尝试使用expect..."))
-                self.execute_with_expect(mount_cmd, password)
+                self.message_queue.put(("log", "[SSHFS] [失败] 请检查密码和网络连接"))
                 
         except Exception as e:
             self.message_queue.put(("log", f"[SSHFS] [错误] sshpass执行失败: {str(e)}"))
-            # 回退到expect方法
-            self.execute_with_expect(mount_cmd, password)
-
-    def execute_with_expect(self, mount_cmd, password):
-        """使用expect脚本执行挂载"""
-        try:
-            self.message_queue.put(("log", "[SSHFS] [信息] 使用expect脚本执行挂载..."))
-            
-            # 创建expect脚本
-            expect_script = self.create_expect_script(mount_cmd, password)
-            if not expect_script:
-                self.message_queue.put(("log", "[SSHFS] [错误] 无法创建expect脚本"))
-                return
-            
-            self.message_queue.put(("log", f"[SSHFS] [调试] expect脚本路径: {expect_script}"))
-            
-            # 检查expect命令是否可用
-            try:
-                expect_check = subprocess.run(["which", "expect"], capture_output=True, text=True, timeout=5)
-                if expect_check.returncode != 0:
-                    self.message_queue.put(("log", "[SSHFS] [错误] expect命令不可用，请安装expect包"))
-                    return
-                self.message_queue.put(("log", f"[SSHFS] [调试] expect命令路径: {expect_check.stdout.strip()}"))
-            except Exception as e:
-                self.message_queue.put(("log", f"[SSHFS] [错误] 检查expect命令失败: {str(e)}"))
-                return
-            
-            # 执行expect脚本
-            self.message_queue.put(("log", f"[SSHFS] [调试] 执行命令: expect {expect_script}"))
-            result = subprocess.run(["expect", expect_script], capture_output=True, text=True, timeout=60)
-            
-            # 详细记录输出
-            self.message_queue.put(("log", f"[SSHFS] [调试] expect返回码: {result.returncode}"))
-            if result.stdout:
-                self.message_queue.put(("log", f"[SSHFS] [调试] expect输出: {result.stdout.strip()}"))
-            if result.stderr:
-                self.message_queue.put(("log", f"[SSHFS] [调试] expect错误: {result.stderr.strip()}"))
-            
-            if result.returncode == 0:
-                self.message_queue.put(("log", "[SSHFS] [成功] expect脚本执行成功"))
-                
-                # 验证挂载是否真的成功
-                self.message_queue.put(("log", "[SSHFS] [信息] 验证挂载状态..."))
-                self.verify_mount_status(mount_cmd)
-                
-            else:
-                error_msg = result.stderr.strip() if result.stderr else "未知错误"
-                self.message_queue.put(("log", f"[SSHFS] [失败] expect挂载失败: {error_msg}"))
-                
-                # expect失败，不再回退，避免无限循环
-                self.message_queue.put(("log", "[SSHFS] [失败] expect挂载失败，请检查网络和SSH配置"))
-                self.message_queue.put(("sshfs_status", "挂载失败"))
-                self.message_queue.put(("sshfs_title", "SSHFS 配置 - 挂载失败"))
-                
-        except Exception as e:
-            self.message_queue.put(("log", f"[SSHFS] [错误] expect执行失败: {str(e)}"))
-            # expect执行异常，不再回退
-            self.message_queue.put(("sshfs_status", "挂载失败"))
-            self.message_queue.put(("sshfs_title", "SSHFS 配置 - 挂载失败"))
-
-    def create_expect_script(self, mount_cmd, password):
-        """创建expect脚本"""
-        try:
-            # 创建临时expect脚本，使用原始字符串避免转义问题
-            script_content = f"""#!/usr/bin/expect -f
-set timeout 120
-log_user 1
-puts "Starting SSHFS mount..."
-
-spawn {' '.join(mount_cmd)}
-puts "Spawned command: {' '.join(mount_cmd)}"
-
-expect {{
-    "password:" {{
-        puts "Got password prompt, sending password..."
-        send "{password}\\r"
-        exp_continue
-    }}
-    "Password:" {{
-        puts "Got Password prompt, sending password..."
-        send "{password}\\r"
-        exp_continue
-    }}
-    "yes/no" {{
-        puts "Got yes/no prompt, sending yes..."
-        send "yes\\r"
-        exp_continue
-    }}
-    "Are you sure you want to continue connecting" {{
-        puts "Got connection prompt, sending yes..."
-        send "yes\\r"
-        exp_continue
-    }}
-    "Connection refused" {{
-        puts "Connection refused by server"
-        exit 1
-    }}
-    "Permission denied" {{
-        puts "Permission denied - wrong password or user"
-        exit 1
-    }}
-    timeout {{
-        puts "Timeout waiting for completion"
-        exit 1
-    }}
-    eof {{
-        puts "Command completed"
-    }}
-}}
-
-# Wait for the spawned process to finish and get exit code
-catch {{wait}} result
-if {{[llength $result] >= 4}} {{
-    set exit_code [lindex $result 3]
-    puts "Process exit code: $exit_code"
-    exit $exit_code
-}} else {{
-    puts "Process completed successfully"
-    exit 0
-}}
-"""
-            
-            # 写入临时文件
-            import tempfile
-            script_file = tempfile.NamedTemporaryFile(mode='w', suffix='.exp', delete=False)
-            script_file.write(script_content)
-            script_file.close()
-            
-            # 设置执行权限
-            os.chmod(script_file.name, 0o755)
-            
-            return script_file.name
-            
-        except Exception as e:
-            self.message_queue.put(("log", f"[SSHFS] [错误] 创建expect脚本失败: {str(e)}"))
-            return None
 
     def verify_mount_status(self, mount_cmd):
         """验证挂载状态"""
@@ -3702,15 +3555,6 @@ if {{[llength $result] >= 4}} {{
             
         except Exception as e:
             self.log_message(f"[SSHFS] 选择路径失败: {str(e)}")
-    
-    def on_language_changed(self, event=None):
-        """语言选择变化时的处理"""
-        try:
-            language = self.sshfs_language_var.get()
-            self.sshfs_use_chinese = (language == "中文")
-            self.log_message(f"[SSHFS] 终端语言已切换为: {language}")
-        except Exception as e:
-            self.log_message(f"[SSHFS] 语言切换失败: {str(e)}")
     
     def refresh_sshfs_history(self):
         """刷新SSHFS历史记录下拉框"""
