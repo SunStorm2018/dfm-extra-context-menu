@@ -59,8 +59,8 @@ Depends: ${misc:Depends},
   sshpass,
   sshfs
 Description: Deepin Project Downloader context menu plugin for DDE File Manager
-Provides Deepin project downloader tool context menu option for downloading
-and managing Deepin projects from various sources in DDE File Manager.
+ Provides Deepin project downloader tool context menu option for downloading
+ and managing Deepin projects from various sources in DDE File Manager.
 
 Package: dfm-tools-dde-dconfig-editor
 Architecture: all
@@ -92,8 +92,8 @@ Architecture: all
 Depends: ${misc:Depends},
   code
 Description: Visual Studio Code context menu plugin for DDE File Manager
-  Provides Visual Studio Code launcher context menu option for opening
-  project directories in DDE File Manager.
+ Provides Visual Studio Code launcher context menu option for opening
+ project directories in DDE File Manager.
 
 Package: dfm-tools-qtcreator
 Architecture: all

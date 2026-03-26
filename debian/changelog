@@ -1,3 +1,11 @@
+dfm-tools-plugins (1.5.4-1) unstable; urgency=medium
+
+  * chore: Update version to 1.5.4-1
+  * feat(ui): add about software tab and improve SSHFS progress handling
+  * feat(sshfs): improve mount process and add sshpass dependency
+
+ -- zhanghongyuan <zhanghongyuan@uniontech.com>  Thu, 26 Mar 2026 17:41:53 +0800
+
 dfm-tools-plugins (1.5.3-1) unstable; urgency=medium
 
   * chore: Update version to 1.5.3-1
