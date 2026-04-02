@@ -1,41 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<svg width="128" height="128" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Git 图标渐变背景 -->
+    <linearGradient id="gitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#f34f29;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#d73a49;stop-opacity:1" />
     </linearGradient>
   </defs>
   
-  <!-- 背景圆形 -->
-  <circle cx="24" cy="24" r="22" fill="url(#grad1)" stroke="#333" stroke-width="2"/>
+  <!-- 圆形背景 -->
+  <circle cx="512" cy="512" r="480" fill="url(#gitGradient)" />
   
-  <!-- Git分支图标 -->
-  <g fill="white" stroke="white" stroke-width="1">
+  <!-- Git 分支图标 -->
+  <g fill="#FFFFFF">
     <!-- 主分支线 -->
-    <path d="M 12 24 L 36 24" stroke-width="3"/>
+    <path d="M 256 512 L 768 512" fill="none" stroke="#FFFFFF" stroke-width="48" stroke-linecap="round"/>
     
     <!-- 分支点 -->
-    <circle cx="24" cy="24" r="3" fill="white"/>
+    <circle cx="512" cy="512" r="48" fill="#FFFFFF"/>
     
-    <!-- 分支线1 -->
-    <path d="M 24 24 L 24 12" stroke-width="2"/>
-    <circle cx="24" cy="12" r="2" fill="white"/>
+    <!-- 分支线1 - 上 -->
+    <path d="M 512 512 L 512 256" fill="none" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round"/>
+    <circle cx="512" cy="256" r="32" fill="#FFFFFF"/>
     
-    <!-- 分支线2 -->
-    <path d="M 24 24 L 24 36" stroke-width="2"/>
-    <circle cx="24" cy="36" r="2" fill="white"/>
+    <!-- 分支线2 - 下 -->
+    <path d="M 512 512 L 512 768" fill="none" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round"/>
+    <circle cx="512" cy="768" r="32" fill="#FFFFFF"/>
     
-    <!-- 分支线3 -->
-    <path d="M 24 24 L 36 18" stroke-width="2"/>
-    <circle cx="36" cy="18" r="2" fill="white"/>
+    <!-- 分支线3 - 右上 -->
+    <path d="M 512 512 L 768 384" fill="none" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round"/>
+    <circle cx="768" cy="384" r="32" fill="#FFFFFF"/>
     
-    <!-- 分支线4 -->
-    <path d="M 24 24 L 36 30" stroke-width="2"/>
-    <circle cx="36" cy="30" r="2" fill="white"/>
+    <!-- 分支线4 - 右下 -->
+    <path d="M 512 512 L 768 640" fill="none" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round"/>
+    <circle cx="768" cy="640" r="32" fill="#FFFFFF"/>
   </g>
   
   <!-- 小圆点表示提交 -->
-  <circle cx="18" cy="24" r="1.5" fill="white"/>
-  <circle cx="30" cy="24" r="1.5" fill="white"/>
-</svg> 
+  <circle cx="384" cy="512" r="24" fill="#FFFFFF"/>
+  <circle cx="640" cy="512" r="24" fill="#FFFFFF"/>
+</svg>

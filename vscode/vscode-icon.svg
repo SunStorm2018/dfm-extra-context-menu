@@ -1,3 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <path d="M24.00276,2,12,13.303,4.83931,8,2,10l6.77209,6L2,22l2.83931,2L12,18.702,24.00276,30,30,27.08726V4.91285ZM24,9.43392V22.5655L15.28877,16Z" style="fill: #2196f3"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- VS Code 蓝色渐变背景 -->
+    <linearGradient id="vscodeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2196f3;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1976d2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 圆形背景 -->
+  <circle cx="512" cy="512" r="480" fill="url(#vscodeGradient)" />
+  
+  <!-- VS Code 图标 -->
+  <g fill="#FFFFFF">
+    <!-- 主体形状 -->
+    <path d="M 768 102.4 L 307.2 307.2 L 128 179.2 L 128 409.6 L 307.2 512 L 128 614.4 L 128 844.8 L 307.2 716.8 L 768 921.6 L 896 844.8 L 896 179.2 Z M 768 358.4 L 768 665.6 L 460.8 512 Z" />
+  </g>
 </svg>

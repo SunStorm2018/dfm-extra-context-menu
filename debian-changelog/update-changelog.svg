@@ -1,1 +1,22 @@
-<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg t="1761870441290" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7952" xmlns:xlink="http://www.w3.org/1999/xlink" width="128" height="128"><path d="M499.2 947.2A448 448 0 0 1 182.4256 182.4256a448 448 0 0 1 633.5488 633.5488A445.0816 445.0816 0 0 1 499.2 947.2z m-47.7952-549.5296v318.464a47.7952 47.7952 0 0 0 95.5904 0v-318.464l94.1568 94.1568a47.7952 47.7952 0 1 0 67.584-67.584L532.992 248.4736a47.7696 47.7696 0 0 0-67.584 0l-175.744 175.7696a47.7952 47.7952 0 0 0 67.584 67.584l94.1056-94.1312z" fill="#C0191F" p-id="7953"></path></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 更新日志红色渐变背景 -->
+    <linearGradient id="changelogGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e53935;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c62828;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 圆形背景 -->
+  <circle cx="512" cy="512" r="480" fill="url(#changelogGradient)" />
+  
+  <!-- 更新箭头图标 -->
+  <g fill="#FFFFFF">
+    <!-- 箭头主体 -->
+    <path d="M 512 212 L 732 452 L 612 452 L 612 812 L 412 812 L 412 452 L 292 452 Z" />
+    
+    <!-- 箭头头部 -->
+    <path d="M 512 212 L 632 352 L 512 332 L 392 352 Z" />
+  </g>
+</svg>
