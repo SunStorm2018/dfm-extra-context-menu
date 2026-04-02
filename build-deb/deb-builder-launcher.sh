@@ -81,9 +81,109 @@ clean_build_cache() {
     send_notification "构建缓存清理完成" "已清理: $(basename "$source_dir")" "normal"
 }
 
+# 移动构建产物到packages目录
+move_built_packages() {
+    local source_dir="$1"
+    local packages_dir="$2"
+    local project_name=""
+    
+    # 尝试从源码目录名获取项目名
+    project_name=$(basename "$source_dir")
+    
+    # 如果源码目录是当前目录，尝试从debian/control文件获取项目名
+    if [ "$project_name" = "." ]; then
+        project_name=$(basename "$(pwd)")
+    fi
+    
+    # 获取当前构建产生的deb包（通过时间戳筛选最近2分钟内创建的包）
+    local recent_debs=$(find .. -maxdepth 1 -name "*.deb" -mmin -2 2>/dev/null || true)
+    
+    # 如果没有找到最近的包，则尝试通过项目名筛选
+    if [ -z "$recent_debs" ]; then
+        recent_debs=$(find .. -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-tools-*.deb" 2>/dev/null || true)
+    fi
+    
+    if [ -z "$recent_debs" ]; then
+        error "未找到当前项目的构建产物"
+        return 1
+    fi
+    
+    # 创建packages目录（如果不存在）
+    if [ ! -d "$packages_dir" ]; then
+        log "创建packages目录: $packages_dir"
+        mkdir -p "$packages_dir"
+    fi
+    
+    # 移动构建产物到packages目录
+    log "移动构建产物到packages目录..."
+    local moved_count=0
+    
+    # 移动.deb包
+    while IFS= read -r deb_file; do
+        if [ -f "$deb_file" ]; then
+            local deb_name=$(basename "$deb_file")
+            log "  移动: $deb_name"
+            mv "$deb_file" "$packages_dir/"
+            moved_count=$((moved_count + 1))
+        fi
+    done <<< "$recent_debs"
+    
+    # 移动对应的.buildinfo和.changes文件
+    local buildinfo_files=$(find .. -maxdepth 1 -name "*.buildinfo" -mmin -2 2>/dev/null || true)
+    if [ -z "$buildinfo_files" ]; then
+        buildinfo_files=$(find .. -maxdepth 1 -name "*${project_name}*.buildinfo" 2>/dev/null || true)
+    fi
+    
+    while IFS= read -r buildinfo_file; do
+        if [ -f "$buildinfo_file" ]; then
+            local buildinfo_name=$(basename "$buildinfo_file")
+            log "  移动: $buildinfo_name"
+            mv "$buildinfo_file" "$packages_dir/"
+            moved_count=$((moved_count + 1))
+        fi
+    done <<< "$buildinfo_files"
+    
+    local changes_files=$(find .. -maxdepth 1 -name "*.changes" -mmin -2 2>/dev/null || true)
+    if [ -z "$changes_files" ]; then
+        changes_files=$(find .. -maxdepth 1 -name "*${project_name}*.changes" 2>/dev/null || true)
+    fi
+    
+    while IFS= read -r changes_file; do
+        if [ -f "$changes_file" ]; then
+            local changes_name=$(basename "$changes_file")
+            log "  移动: $changes_name"
+            mv "$changes_file" "$packages_dir/"
+            moved_count=$((moved_count + 1))
+        fi
+    done <<< "$changes_files"
+    
+    success "已移动 $moved_count 个文件到: $packages_dir"
+    
+    # 使用系统默认应用打开packages目录
+    log "正在打开packages目录..."
+    if command -v xdg-open >/dev/null 2>&1; then
+        xdg-open "$packages_dir" >/dev/null 2>&1 &
+        success "已打开packages目录"
+    elif command -v deepin-file-manager >/dev/null 2>&1; then
+        deepin-file-manager "$packages_dir" >/dev/null 2>&1 &
+        success "已打开packages目录"
+    elif command -v nautilus >/dev/null 2>&1; then
+        nautilus "$packages_dir" >/dev/null 2>&1 &
+        success "已打开packages目录"
+    elif command -v dolphin >/dev/null 2>&1; then
+        dolphin "$packages_dir" >/dev/null 2>&1 &
+        success "已打开packages目录"
+    else
+        log "提示: 无法自动打开packages目录，请手动打开: $packages_dir"
+    fi
+    
+    return 0
+}
+
 # 显示构建产物路径
 show_built_packages() {
     local source_dir="$1"
+    local packages_dir="$2"
     local project_name=""
     
     # 尝试从源码目录名获取项目名
@@ -103,15 +203,28 @@ show_built_packages() {
     fi
     
     if [ -n "$recent_debs" ]; then
-        log "构建产物:"
+        log "构建产物 (已移动到packages目录):"
         ls -la $recent_debs
         echo "$recent_debs"
         
-        # 生成安装命令
-        local deb_files=$(echo "$recent_debs" | tr '\n' ' ')
-        echo ""
-        log " sudo apt install $deb_files"
-        log " sudo dpkg -i $deb_files"
+        # 显示packages目录中的所有文件
+        if [ -d "$packages_dir" ]; then
+            echo ""
+            log "packages目录内容:"
+            ls -la "$packages_dir"/*.{deb,buildinfo,changes} 2>/dev/null || true
+        fi
+        
+        # 生成安装命令（使用packages目录中的包）
+        local deb_files=$(find "$packages_dir" -maxdepth 1 -name "*.deb" -mmin -2 2>/dev/null | tr '\n' ' ')
+        if [ -z "$deb_files" ]; then
+            deb_files=$(find "$packages_dir" -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-tools-*.deb" 2>/dev/null | tr '\n' ' ')
+        fi
+        
+        if [ -n "$deb_files" ]; then
+            echo ""
+            log " sudo apt install $deb_files"
+            log " sudo dpkg -i $deb_files"
+        fi
     else
         error "未找到当前项目的构建产物"
     fi
@@ -122,6 +235,10 @@ main() {
     local source_dir="${1:-.}"
     local clean_after_build="${2:-yes}"  # 默认构建后清理
     local parallel_jobs="${3:-auto}"     # 并行任务数，默认自动检测
+    
+    # 确定packages目录路径（项目目录的上一级目录的packages子目录）
+    local project_parent_dir="$(cd "$source_dir/.." && pwd)"
+    local packages_dir="$project_parent_dir/packages"
     
     echo "=========================================="
     echo "        快速DEB包构建"
@@ -165,6 +282,7 @@ main() {
     log "构建后清理: $clean_after_build"
     log "系统CPU核心数: $cpu_count"
     log "使用并行任务数: $parallel_num"
+    log "构建产物将移动到: $packages_dir"
     
     # 发送开始构建通知
     send_notification "开始构建DEB包" "正在构建: $(basename "$(pwd)") (并行: $parallel_num)" "low"
@@ -201,8 +319,11 @@ main() {
         success "DEB包构建成功!"
         success "构建耗时: ${build_minutes}分${build_seconds}秒 (并行任务数: $parallel_num)"
         
+        # 移动构建产物到packages目录
+        move_built_packages "$source_dir" "$packages_dir"
+        
         # 显示构建产物
-        show_built_packages "$source_dir"
+        show_built_packages "$source_dir" "$packages_dir"
         
         # 发送成功通知 - 只获取当前项目的包
         local project_name=""
@@ -211,10 +332,10 @@ main() {
             project_name=$(basename "$(pwd)")
         fi
         
-        # 获取当前构建产生的deb包
-        local recent_debs=$(find .. -maxdepth 1 -name "*.deb" -mmin -5 2>/dev/null || true)
+        # 从packages目录获取构建的deb包
+        local recent_debs=$(find "$packages_dir" -maxdepth 1 -name "*.deb" -mmin -5 2>/dev/null || true)
         if [ -z "$recent_debs" ]; then
-            recent_debs=$(find .. -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-tools-*.deb" 2>/dev/null | head -1 || true)
+            recent_debs=$(find "$packages_dir" -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-tools-*.deb" 2>/dev/null | head -1 || true)
         fi
         
         if [ -n "$recent_debs" ]; then
@@ -279,10 +400,18 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     - 构建完成后自动使用dh_clean清理构建缓存
     - 桌面通知提示构建状态
     - 显示构建产物信息
+    - 构建产物自动移动到packages目录（不污染源码目录）
+    - 同时处理.deb、.buildinfo、.changes文件
+    - 构建成功后自动打开packages目录
     - DEB_BUILD_OPTIONS环境变量正确设置
 
 环境变量:
     DEB_BUILD_OPTIONS  自动设置为 parallel=N，其中N为并行任务数
+
+构建产物:
+    - 构建的.deb、.buildinfo、.changes文件会自动移动到脚本所在目录的packages子目录
+    - packages目录会自动创建（如果不存在）
+    - 构建成功后会自动打开packages目录（使用系统默认文件管理器）
 
 EOF
     exit 0

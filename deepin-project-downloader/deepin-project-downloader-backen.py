@@ -5864,16 +5864,41 @@ class DeepinProjectDownloader:
             messagebox.showwarning("警告", f"项目目录不存在: {project_name}")
 
     def deb_packet_generate_dir(self, project_name):
-        """在目标目录打包并将产物移动到 packages 文件夹，同时通知进度条"""
+        """在目标目录打包并将产物移动到 packages 文件夹，同时通知进度条
+        
+        功能特性:
+        - 并行构建加速 (自动检测CPU核心数)
+        - 构建完成后自动清理构建缓存
+        - 显示构建产物信息
+        - 构建时间统计
+        """
         project_path = os.path.join(self.save_path.get(), project_name)
+        
         def combined_query_task():
             if os.path.exists(project_path):
                 # 1. 启动进度条
                 self.message_queue.put(("progress", "start"))
-                self.log_message("开始打包...")
-
-                # 2. 执行打包命令
+                self.message_queue.put(("log", "[打包] [开始] 开始打包流程..."))
+                
+                # 2. 检测CPU核心数并设置并行构建
                 try:
+                    cpu_count = int(subprocess.check_output(['nproc'], text=True).strip())
+                    parallel_num = cpu_count  # 使用所有CPU核心
+                    self.message_queue.put(("log", f"[打包] [信息] 系统CPU核心数: {cpu_count}"))
+                    self.message_queue.put(("log", f"[打包] [信息] 使用并行任务数: {parallel_num}"))
+                except Exception as e:
+                    parallel_num = 1  # 如果检测失败，使用单线程
+                    self.message_queue.put(("log", f"[打包] [警告] 检测CPU核心数失败: {str(e)}，使用单线程构建"))
+                
+                # 设置构建环境变量
+                build_env = os.environ.copy()
+                build_env['DEB_BUILD_OPTIONS'] = f"parallel={parallel_num}"
+
+                # 3. 执行打包命令
+                try:
+                    # 记录构建开始时间
+                    build_start_time = time.time()
+                    
                     # 使用Popen实时输出打包进度
                     build_process = subprocess.Popen(
                         ["dpkg-buildpackage", "-us", "-uc", "-b"],
@@ -5882,7 +5907,8 @@ class DeepinProjectDownloader:
                         stderr=subprocess.STDOUT,  # 将stderr重定向到stdout以便统一处理
                         text=True,
                         bufsize=1,
-                        universal_newlines=True
+                        universal_newlines=True,
+                        env=build_env  # 传递环境变量
                     )
                     
                     # 实时读取并输出打包过程
@@ -5922,13 +5948,21 @@ class DeepinProjectDownloader:
                     # 等待进程完成并获取返回码
                     build_returncode = build_process.wait()
                     
+                    # 计算构建耗时
+                    build_end_time = time.time()
+                    build_duration = int(build_end_time - build_start_time)
+                    build_minutes = build_duration // 60
+                    build_seconds = build_duration % 60
+                    
                     if build_returncode != 0:
                         self.message_queue.put(("progress", "stop"))
                         self.message_queue.put(("log", f"[打包] [失败] 打包失败，返回码: {build_returncode}"))
+                        self.message_queue.put(("log", f"[打包] [耗时] 构建耗时: {build_minutes}分{build_seconds}秒"))
                         messagebox.showerror("打包失败", f"打包过程失败，返回码: {build_returncode}")
                         return
                     
                     self.message_queue.put(("log", f"[打包] [成功] 打包完成: {project_name}"))
+                    self.message_queue.put(("log", f"[打包] [耗时] 构建耗时: {build_minutes}分{build_seconds}秒 (并行任务数: {parallel_num})"))
                     
                 except Exception as e:
                     self.message_queue.put(("progress", "stop"))
@@ -5940,26 +5974,173 @@ class DeepinProjectDownloader:
                 self.message_queue.put(("progress", "stop"))
                 self.message_queue.put(("log", f"[打包] [完成] 打包流程结束，正在处理文件..."))
 
-                # 4. 新建 packages 文件夹（在项目目录的上一级目录）
+                # 4. 清理构建缓存（使用dh_clean）
+                self.message_queue.put(("log", f"[打包] [清理] 开始清理构建缓存..."))
+                try:
+                    # 使用dh_clean清理构建缓存
+                    clean_process = subprocess.run(
+                        ["dh_clean"],
+                        cwd=project_path,
+                        capture_output=True,
+                        text=True,
+                        timeout=60
+                    )
+                    
+                    if clean_process.returncode == 0:
+                        self.message_queue.put(("log", f"[打包] [清理] 使用dh_clean清理构建缓存成功"))
+                    else:
+                        self.message_queue.put(("log", f"[打包] [警告] dh_clean清理失败: {clean_process.stderr.strip()}"))
+                    
+                    # 额外清理debian构建目录
+                    import glob as glob_module
+                    debhelper_dirs = glob_module.glob(os.path.join(project_path, "debian", ".debhelper"))
+                    for debhelper_dir in debhelper_dirs:
+                        try:
+                            shutil.rmtree(debhelper_dir)
+                        except:
+                            pass
+                    
+                    dfm_tools_dirs = glob_module.glob(os.path.join(project_path, "debian", "dfm-tools-*"))
+                    for dfm_tools_dir in dfm_tools_dirs:
+                        try:
+                            shutil.rmtree(dfm_tools_dir)
+                        except:
+                            pass
+                    
+                    # 清理临时文件
+                    temp_files = [
+                        os.path.join(project_path, "debian", "files"),
+                        os.path.join(project_path, "debian", "debhelper-build-stamp"),
+                        os.path.join(project_path, "debian", "*.log"),
+                        os.path.join(project_path, "debian", "*.substvars")
+                    ]
+                    
+                    for pattern in temp_files:
+                        for temp_file in glob_module.glob(pattern):
+                            try:
+                                os.remove(temp_file)
+                            except:
+                                pass
+                    
+                    self.message_queue.put(("log", f"[打包] [清理] 构建缓存清理完成"))
+                    
+                except subprocess.TimeoutExpired:
+                    self.message_queue.put(("log", f"[打包] [警告] 清理构建缓存超时"))
+                except Exception as e:
+                    self.message_queue.put(("log", f"[打包] [警告] 清理构建缓存失败: {str(e)}"))
+
+                # 5. 新建 packages 文件夹（在项目目录的上一级目录）
                 parent_dir = os.path.dirname(project_path)
                 packages_dir = os.path.join(parent_dir, "packages")
                 os.makedirs(packages_dir, exist_ok=True)
 
-                # 4. 移动 .deb 文件（一般在项目目录的上一级）
-                deb_files = glob.glob(os.path.join(parent_dir, "*.deb"))
-                if not deb_files:
-                    self.log_message("未找到 .deb 文件")
+                # 6. 移动构建产物到 packages 目录（.deb、.buildinfo、.changes）
+                current_time = time.time()
+                
+                # 6.1 移动 .deb 文件
+                all_deb_files = glob.glob(os.path.join(parent_dir, "*.deb"))
+                recent_deb_files = []
+                for deb_file in all_deb_files:
+                    try:
+                        file_mtime = os.path.getmtime(deb_file)
+                        # 只选择最近5分钟内修改的文件
+                        if current_time - file_mtime < 300:  # 300秒 = 5分钟
+                            recent_deb_files.append(deb_file)
+                    except:
+                        pass
+                
+                # 如果没有找到最近的文件，则通过项目名筛选
+                if not recent_deb_files:
+                    self.message_queue.put(("log", "[打包] [信息] 未找到最近5分钟的 .deb 文件，尝试通过项目名筛选..."))
+                    for deb_file in all_deb_files:
+                        deb_name = os.path.basename(deb_file)
+                        # 检查文件名是否包含项目名或 dfm-tools
+                        if project_name in deb_name or "dfm-tools-" in deb_name:
+                            recent_deb_files.append(deb_file)
+                
+                moved_count = 0
+                if not recent_deb_files:
+                    self.message_queue.put(("log", "[打包] [警告] 未找到当前项目的 .deb 文件"))
                 else:
-                    for deb_file in deb_files:
+                    self.message_queue.put(("log", f"[打包] [产物] 找到 {len(recent_deb_files)} 个当前项目的 .deb 文件:"))
+                    for deb_file in recent_deb_files:
                         try:
+                            deb_name = os.path.basename(deb_file)
+                            deb_size = os.path.getsize(deb_file) / (1024 * 1024)  # 转换为MB
                             shutil.move(deb_file, packages_dir)
-                            self.log_message(f"已移动: {os.path.basename(deb_file)} 到 packages/")
+                            self.message_queue.put(("log", f"[打包] [产物] - {deb_name} ({deb_size:.2f} MB) -> packages/"))
+                            moved_count += 1
                         except Exception as e:
-                            self.log_message(f"移动文件失败: {deb_file}，原因: {e}")
+                            self.message_queue.put(("log", f"[打包] [错误] 移动文件失败: {deb_file}，原因: {e}"))
+                
+                # 6.2 移动 .buildinfo 文件
+                all_buildinfo_files = glob.glob(os.path.join(parent_dir, "*.buildinfo"))
+                recent_buildinfo_files = []
+                for buildinfo_file in all_buildinfo_files:
+                    try:
+                        file_mtime = os.path.getmtime(buildinfo_file)
+                        if current_time - file_mtime < 300:
+                            recent_buildinfo_files.append(buildinfo_file)
+                    except:
+                        pass
+                
+                if not recent_buildinfo_files:
+                    for buildinfo_file in all_buildinfo_files:
+                        buildinfo_name = os.path.basename(buildinfo_file)
+                        if project_name in buildinfo_name or "dfm-tools-" in buildinfo_name:
+                            recent_buildinfo_files.append(buildinfo_file)
+                
+                if recent_buildinfo_files:
+                    self.message_queue.put(("log", f"[打包] [产物] 找到 {len(recent_buildinfo_files)} 个 .buildinfo 文件:"))
+                    for buildinfo_file in recent_buildinfo_files:
+                        try:
+                            buildinfo_name = os.path.basename(buildinfo_file)
+                            shutil.move(buildinfo_file, packages_dir)
+                            self.message_queue.put(("log", f"[打包] [产物] - {buildinfo_name} -> packages/"))
+                            moved_count += 1
+                        except Exception as e:
+                            self.message_queue.put(("log", f"[打包] [错误] 移动文件失败: {buildinfo_file}，原因: {e}"))
+                
+                # 6.3 移动 .changes 文件
+                all_changes_files = glob.glob(os.path.join(parent_dir, "*.changes"))
+                recent_changes_files = []
+                for changes_file in all_changes_files:
+                    try:
+                        file_mtime = os.path.getmtime(changes_file)
+                        if current_time - file_mtime < 300:
+                            recent_changes_files.append(changes_file)
+                    except:
+                        pass
+                
+                if not recent_changes_files:
+                    for changes_file in all_changes_files:
+                        changes_name = os.path.basename(changes_file)
+                        if project_name in changes_name or "dfm-tools-" in changes_name:
+                            recent_changes_files.append(changes_file)
+                
+                if recent_changes_files:
+                    self.message_queue.put(("log", f"[打包] [产物] 找到 {len(recent_changes_files)} 个 .changes 文件:"))
+                    for changes_file in recent_changes_files:
+                        try:
+                            changes_name = os.path.basename(changes_file)
+                            shutil.move(changes_file, packages_dir)
+                            self.message_queue.put(("log", f"[打包] [产物] - {changes_name} -> packages/"))
+                            moved_count += 1
+                        except Exception as e:
+                            self.message_queue.put(("log", f"[打包] [错误] 移动文件失败: {changes_file}，原因: {e}"))
+                
+                # 6.4 生成安装命令
+                if recent_deb_files:
+                    deb_names = [f"packages/{os.path.basename(f)}" for f in recent_deb_files]
+                    self.message_queue.put(("log", f"[打包] [安装] 安装命令:"))
+                    self.message_queue.put(("log", f"[打包] [安装] sudo apt install {' '.join(deb_names)}"))
+                    self.message_queue.put(("log", f"[打包] [安装] sudo dpkg -i {' '.join(deb_names)}"))
+                
+                self.message_queue.put(("log", f"[打包] [完成] 已移动 {moved_count} 个文件到 packages 目录"))
 
-                # 5. 打开 packages 文件夹（在上一级目录）
+                # 7. 打开 packages 文件夹（在上一级目录）
                 subprocess.Popen(["xdg-open", packages_dir])
-                self.log_message(f"已打开 packages 目录: {packages_dir}")
+                self.message_queue.put(("log", f"[打包] [完成] 已打开 packages 目录: {packages_dir}"))
 
             else:
                 messagebox.showwarning("警告", f"项目目录不存在: {project_name}")
