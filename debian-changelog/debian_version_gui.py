@@ -415,6 +415,7 @@ class DebianVersionGUI:
         self.root.title("Debian Changelog GUI")
         self.root.geometry("900x750")
         self.root.resizable(True, True)
+        self.root.minsize(700, 600)  # 设置最小窗口大小，防止内容被裁剪
         
         # Git 操作封装
         self.git = GitWrapper()
@@ -426,6 +427,7 @@ class DebianVersionGUI:
         # 设置文件路径
         self.settings_file = os.path.expanduser("~/.config/debian-changelog-gui/settings.json")
         self.history = []
+        self.project_history = []  # 项目路径历史记录
         
         # 创建界面
         self.create_widgets()
@@ -435,26 +437,34 @@ class DebianVersionGUI:
     
     def create_widgets(self):
         """创建界面组件"""
-        # 主容器
+        # 主容器 - 使用 grid 布局以更好地控制各个区域
         main_container = ttk.Frame(self.root, padding="10")
         main_container.pack(fill=tk.BOTH, expand=True)
         
-        # 配置网格权重
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
+        # 配置主容器网格权重 - 确保预览区域可以扩展，但底部区域固定
+        main_container.columnconfigure(0, weight=1)
+        main_container.rowconfigure(4, weight=1)  # 预览区域可以扩展
         
         # === 顶部区域：项目路径和作者信息 ===
         top_frame = ttk.Frame(main_container)
-        top_frame.pack(fill=tk.X, pady=(0, 10))
+        top_frame.grid(row=0, column=0, sticky=tk.EW, pady=(0, 10))
         
         # 项目路径
         path_frame = ttk.Frame(top_frame)
         path_frame.pack(fill=tk.X, pady=(0, 5))
         
+        # 项目路径输入框
         self.project_path_var = tk.StringVar()
         self.project_path_entry = ttk.Entry(path_frame, textvariable=self.project_path_var)
         self.project_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.project_path_entry.bind('<FocusOut>', self.on_project_path_changed)
+        
+        # 历史项目下拉列表
+        self.project_history_var = tk.StringVar()
+        self.project_history_combo = ttk.Combobox(path_frame, textvariable=self.project_history_var, 
+                                                  width=30, state='readonly')
+        self.project_history_combo.pack(side=tk.LEFT, padx=(5, 0))
+        self.project_history_combo.bind('<<ComboboxSelected>>', self.on_history_project_selected)
         
         ttk.Button(path_frame, text="Open Project", command=self.browse_project).pack(side=tk.LEFT, padx=(5, 0))
         ttk.Button(path_frame, text="Refresh", command=self.refresh_all).pack(side=tk.LEFT, padx=(5, 0))
@@ -477,7 +487,7 @@ class DebianVersionGUI:
         
         # === 版本信息区域 ===
         version_frame = ttk.LabelFrame(main_container, text="Version Info", padding="10")
-        version_frame.pack(fill=tk.X, pady=(0, 10))
+        version_frame.grid(row=1, column=0, sticky=tk.EW, pady=(0, 10))
         
         # 当前版本
         ttk.Label(version_frame, text="Current Version:").grid(row=0, column=0, sticky=tk.W, pady=5)
@@ -507,7 +517,7 @@ class DebianVersionGUI:
         
         # === YAML 配置区域 ===
         yaml_frame = ttk.LabelFrame(main_container, text="YAML Configuration", padding="10")
-        yaml_frame.pack(fill=tk.X, pady=(0, 10))
+        yaml_frame.grid(row=2, column=0, sticky=tk.EW, pady=(0, 10))
         
         # 选择按钮
         yaml_select_frame = ttk.Frame(yaml_frame)
@@ -552,7 +562,7 @@ class DebianVersionGUI:
         
         # === 预览区域 ===
         preview_frame = ttk.LabelFrame(main_container, text="Preview", padding="10")
-        preview_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        preview_frame.grid(row=4, column=0, sticky=tk.NSEW, pady=(0, 10))
         
         # 标签页
         self.notebook = ttk.Notebook(preview_frame)
@@ -578,7 +588,7 @@ class DebianVersionGUI:
         
         # === 底部按钮区域 ===
         button_frame = ttk.Frame(main_container)
-        button_frame.pack(fill=tk.X, pady=(0, 5))
+        button_frame.grid(row=5, column=0, sticky=tk.EW, pady=(0, 5))
         
         ttk.Button(button_frame, text="Gitk", command=self.open_gitk).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(button_frame, text="Revert", command=self.revert_changes).pack(side=tk.LEFT, padx=(0, 5))
@@ -593,13 +603,20 @@ class DebianVersionGUI:
         # === 状态栏 ===
         self.status_var = tk.StringVar(value="Ready")
         status_bar = ttk.Label(main_container, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
-        status_bar.pack(fill=tk.X, pady=(5, 0))
+        status_bar.grid(row=6, column=0, sticky=tk.EW, pady=(5, 0))
     
     def browse_project(self):
         """浏览选择项目路径"""
         path = filedialog.askdirectory(title="Select Project Directory", initialdir=os.path.expanduser("~"))
         if path:
             self.project_path_var.set(path)
+            self.on_project_path_changed(None)
+    
+    def on_history_project_selected(self, event):
+        """从历史记录中选择项目"""
+        selected_path = self.project_history_var.get()
+        if selected_path:
+            self.project_path_var.set(selected_path)
             self.on_project_path_changed(None)
     
     def on_project_path_changed(self, event):
@@ -615,6 +632,9 @@ class DebianVersionGUI:
             self.status_var.set("Error: Not a git repository")
             messagebox.showerror("Error", "Selected directory is not a git repository!")
             return
+        
+        # 添加到项目历史记录
+        self.add_to_project_history(project_path)
         
         # 加载作者信息
         author_info = self.git.get_author_info()
@@ -979,6 +999,29 @@ class DebianVersionGUI:
         if len(self.history) > 50:
             self.history.pop()
     
+    def add_to_project_history(self, project_path: str):
+        """添加项目到历史记录"""
+        # 规范化路径
+        project_path = os.path.normpath(project_path)
+        
+        # 如果已存在，先移除
+        if project_path in self.project_history:
+            self.project_history.remove(project_path)
+        
+        # 添加到开头
+        self.project_history.insert(0, project_path)
+        
+        # 限制历史记录数量
+        if len(self.project_history) > 10:
+            self.project_history.pop()
+        
+        # 更新下拉列表
+        self.update_project_history_combo()
+    
+    def update_project_history_combo(self):
+        """更新项目历史下拉列表"""
+        self.project_history_combo['values'] = self.project_history
+    
     def load_settings(self):
         """加载设置"""
         try:
@@ -1004,6 +1047,11 @@ class DebianVersionGUI:
                 if "history" in settings:
                     self.history = settings["history"]
                 
+                # 加载项目历史记录
+                if "project_history" in settings:
+                    self.project_history = settings["project_history"]
+                    self.update_project_history_combo()
+                
                 # 加载 YAML 选择状态
                 if "yaml_states" in settings:
                     for widget_name, state in settings["yaml_states"].items():
@@ -1022,6 +1070,7 @@ class DebianVersionGUI:
                 "author": self.author_var.get(),
                 "email": self.email_var.get(),
                 "history": self.history,
+                "project_history": self.project_history,
                 "yaml_states": {}
             }
             

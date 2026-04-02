@@ -27,7 +27,6 @@ from urllib.parse import quote, urlunparse, urlparse
 import tkinter as tk
 from tkinter import (filedialog, messagebox, scrolledtext, ttk)
 
-
 class ProjectConfig:
     """项目配置类 - 集中管理所有配置数据"""
 
@@ -355,6 +354,12 @@ class ProjectConfig:
         CACHE_SSHFS_HISTORY = "sshfs_history.json"
         CONFIG_MAIN = ".deepin_project_downloader.json"
     
+    # 路径配置
+    class Path:
+        """路径配置类"""
+        CACHE_DIR = os.path.join(os.path.expanduser("~"), ".cache", "deepin-project-downloader")
+        CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".deepin_project_downloader.json")
+    
     # 线程池配置
     class ThreadPool:
         """线程池配置类"""
@@ -456,7 +461,6 @@ class ProjectConfig:
         GITHUB_IP_ENTRY = "140.82.112.4 github.com"
         GITHUB_DOMAIN = "github.com"
         GITEE_DOMAIN = "gitee.com"
-
 
 class ScrollableFrame(ttk.Frame):
     """可滚动的Frame组件"""
@@ -677,7 +681,7 @@ class DeepinProjectDownloader:
         self.setup_styles()
         
         # 初始化缓存目录和时间戳
-        self.cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "deepin-project-downloader")
+        self.cache_dir = ProjectConfig.Path.CACHE_DIR
         self.cache_file = os.path.join(self.cache_dir, ProjectConfig.FileName.CACHE_LAST_UPDATE)
         self.update_interval_days = ProjectConfig.UPDATE_INTERVAL_DAYS  # 更新间隔：3天
         self.init_cache_directory()
@@ -692,9 +696,7 @@ class DeepinProjectDownloader:
         # self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
         # 配置文件路径
-        self.config_file = os.path.join(
-            os.path.expanduser("~"), ProjectConfig.FileName.CONFIG_MAIN
-        )
+        self.config_file = ProjectConfig.Path.CONFIG_FILE
         
         # 消息队列用于线程间通信
         self.message_queue = queue.Queue()
@@ -1128,17 +1130,17 @@ class DeepinProjectDownloader:
                     # 更新缓存时间戳
                     self.update_cache_timestamp()
                 else:
-                    self.message_queue.put(("log", "[缓存] 距离上次更新未超过3天，跳过自动查询分支"))
+                    self.message_queue.put(("log", "[缓存] [信息] 距离上次更新未超过3天，跳过自动查询分支"))
                 
                 # 应用保存的分支配置
                 self.apply_saved_branches()
                 
                 # 启用控件
                 self.message_queue.put(("enable_controls", True))
-                self.message_queue.put(("log", "[完成] 配置加载完成，界面已就绪"))
+                self.message_queue.put(("log", "[配置] [完成] 配置加载完成，界面已就绪"))
                 
             except Exception as e:
-                self.message_queue.put(("log", f"[错误] 自动查询和启用过程出错: {str(e)}"))
+                self.message_queue.put(("log", f"[配置] [错误] 自动查询和启用过程出错: {str(e)}"))
                 # 即使出错也要启用控件
                 self.message_queue.put(("enable_controls", True))
         
@@ -1479,7 +1481,7 @@ class DeepinProjectDownloader:
         def delete_task():
             try:
                 self.message_queue.put(("progress", "start"))
-                self.message_queue.put(("log", f"[开始] 批量删除 {len(selected_projects)} 个项目文件夹"))
+                self.message_queue.put(("log", f"[删除] [开始] 批量删除 {len(selected_projects)} 个项目文件夹"))
                 
                 success_count = 0
                 error_count = 0
@@ -1491,21 +1493,21 @@ class DeepinProjectDownloader:
                         if os.path.exists(project_path):
                             import shutil
                             shutil.rmtree(project_path)
-                            self.message_queue.put(("log", f"[成功] 已删除 {project_name} 文件夹"))
+                            self.message_queue.put(("log", f"[删除] [成功] 已删除 {project_name} 文件夹"))
                             # 更新项目状态显示
                             self.message_queue.put(("update_project_status", project_name))
                             success_count += 1
                         else:
-                            self.message_queue.put(("log", f"[跳过] {project_name} 文件夹不存在"))
+                            self.message_queue.put(("log", f"[删除] [跳过] {project_name} 文件夹不存在"))
                     except Exception as e:
-                        self.message_queue.put(("log", f"[失败] {project_name} 删除失败: {str(e)}"))
+                        self.message_queue.put(("log", f"[删除] [失败] {project_name} 删除失败: {str(e)}"))
                         error_count += 1
                 
-                self.message_queue.put(("log", f"[完成] 批量删除完成! 成功: {success_count}, 失败: {error_count}"))
+                self.message_queue.put(("log", f"[删除] [完成] 批量删除完成! 成功: {success_count}, 失败: {error_count}"))
                 self.message_queue.put(("status", "批量删除完成"))
                 
             except Exception as e:
-                self.message_queue.put(("log", f"[错误] 批量删除过程中出错: {str(e)}"))
+                self.message_queue.put(("log", f"[删除] [错误] 批量删除过程中出错: {str(e)}"))
             finally:
                 self.message_queue.put(("progress", "stop"))
         
@@ -1575,39 +1577,39 @@ class DeepinProjectDownloader:
                                             combo.bind('<<ComboboxSelected>>', 
                                                      lambda e, name=project_name: self.on_branch_changed(e, name))
                                             
-                                            self.message_queue.put(("log", f"[检测] {project_name} 分支选项已更新，当前分支: {current_branch}"))
-                                            self.message_queue.put(("log", f"[检测] {project_name} 可用分支: {', '.join(branch_list)}"))
+                                            self.message_queue.put(("log", f"[分支] [信息] {project_name} 分支选项已更新，当前分支: {current_branch}"))
+                                            self.message_queue.put(("log", f"[分支] [信息] {project_name} 可用分支: {', '.join(branch_list)}"))
                                         else:
-                                            self.message_queue.put(("log", f"[检测] {project_name} 当前分支未知，可用分支: {', '.join(branch_list)}"))
+                                            self.message_queue.put(("log", f"[分支] [信息] {project_name} 当前分支未知，可用分支: {', '.join(branch_list)}"))
                                         
                                         detected_count += 1
                                     else:
-                                        self.message_queue.put(("log", f"[检测] {project_name} 没有找到可用分支"))
+                                        self.message_queue.put(("log", f"[分支] [警告] {project_name} 没有找到可用分支"))
                                         error_count += 1
                                 else:
-                                    self.message_queue.put(("log", f"[检测] {project_name} Git命令执行失败"))
+                                    self.message_queue.put(("log", f"[分支] [错误] {project_name} Git命令执行失败"))
                                     error_count += 1
                             
                             except Exception as e:
-                                self.message_queue.put(("log", f"[错误] 检测 {project_name} 分支失败: {str(e)}"))
+                                self.message_queue.put(("log", f"[分支] [错误] 检测 {project_name} 分支失败: {str(e)}"))
                                 error_count += 1
                         else:
-                            self.message_queue.put(("log", f"[检测] {project_name} 目录存在但不是Git仓库"))
+                            self.message_queue.put(("log", f"[分支] [信息] {project_name} 目录存在但不是Git仓库"))
                             not_found_count += 1
                     else:
-                        self.message_queue.put(("log", f"[检测] {project_name} 本地目录不存在: {project_path}"))
+                        self.message_queue.put(("log", f"[分支] [信息] {project_name} 本地目录不存在: {project_path}"))
                         not_found_count += 1
                 
                 # 输出检测结果统计
                 total_projects = len(self.project_repos)
-                self.message_queue.put(("log", f"[检测] 本地分支检测完成: 总计 {total_projects} 个项目"))
-                self.message_queue.put(("log", f"[检测] 检测成功: {detected_count} 个，未找到: {not_found_count} 个，错误: {error_count} 个"))
+                self.message_queue.put(("log", f"[分支] [完成] 本地分支检测完成: 总计 {total_projects} 个项目"))
+                self.message_queue.put(("log", f"[分支] [统计] 检测成功: {detected_count} 个，未找到: {not_found_count} 个，错误: {error_count} 个"))
                 self.message_queue.put(("status", "本地分支检测完成"))
                     
             except Exception as e:
-                self.message_queue.put(("log", f"[错误] 批量检测本地分支失败: {str(e)}"))
+                self.message_queue.put(("log", f"[分支] [错误] 批量检测本地分支失败: {str(e)}"))
                 import traceback
-                self.message_queue.put(("log", f"[错误] 详细错误信息: {traceback.format_exc()}"))
+                self.message_queue.put(("log", f"[分支] [错误] 详细错误信息: {traceback.format_exc()}"))
             finally:
                 self.message_queue.put(("progress", "stop"))
         
@@ -2483,7 +2485,6 @@ class DeepinProjectDownloader:
         except Exception:
             return "获取失败"
     
-
     def get_display_protocol(self):
         """获取显示协议信息"""
         try:
@@ -3097,7 +3098,7 @@ class DeepinProjectDownloader:
                     if output:
                         line = output.strip()
                         if line and not line.startswith('WARNING:'):
-                            self.message_queue.put(("log", f"[SSHFS] [apt install] {line}"))
+                            self.message_queue.put(("log", f"[软件包] [安装] {line}"))
                 
                 # 读取错误输出
                 stderr_output = install_process.stderr.read()
@@ -3406,7 +3407,7 @@ class DeepinProjectDownloader:
             import time
             time.sleep(1)
             
-            self.message_queue.put(("log", "✅ 挂载指令已发送（保持连接）"))
+            self.message_queue.put(("log", "[SSHFS] [信息] 挂载指令已发送（保持连接）"))
             
             # 验证挂载状态
             self.verify_mount_status(mount_cmd)
@@ -3417,185 +3418,6 @@ class DeepinProjectDownloader:
             self.message_queue.put(("sshfs_status", "挂载失败"))
             self.message_queue.put(("sshfs_title", "SSHFS 配置 - 挂载失败"))
     
-    def execute_with_sshpass_background(self, mount_cmd, password):
-        """使用sshpass执行后台挂载（不依赖终端）"""
-        try:
-            import signal
-            
-            # 构建sshpass命令
-            sshpass_cmd = ["sshpass", "-p", password] + mount_cmd
-            
-            self.message_queue.put(("log", "[SSHFS] [信息] 使用sshpass执行后台挂载..."))
-            
-            # 启动后台进程，不等待输出
-            # 使用 Popen 并设置进程组，使其独立于父进程
-            process = subprocess.Popen(
-                sshpass_cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-                stdin=subprocess.DEVNULL,
-                start_new_session=True  # 创建新的会话，使进程独立
-            )
-            
-            # 等待一小段时间让进程启动
-            import time
-            time.sleep(1)
-            
-            # 检查进程是否还在运行
-            poll_result = process.poll()
-            
-            if poll_result is None:
-                # 进程仍在运行，说明挂载可能成功
-                self.message_queue.put(("log", "[SSHFS] [成功] SSHFS挂载进程已启动"))
-                self.message_queue.put(("log", f"[SSHFS] [信息] 挂载进程PID: {process.pid}"))
-                
-                # 验证挂载状态
-                self.root.after(3000, lambda: self.verify_mount_status(mount_cmd))
-            else:
-                # 进程已退出，可能失败
-                stderr_output = ""
-                if process.stderr:
-                    stderr_output = process.stderr.read().decode('utf-8', errors='ignore')
-                
-                self.message_queue.put(("log", f"[SSHFS] [失败] SSHFS挂载进程退出，返回码: {poll_result}"))
-                if stderr_output:
-                    self.message_queue.put(("log", f"[SSHFS] [错误] {stderr_output.strip()}"))
-                
-                # sshpass失败，不再回退
-                self.message_queue.put(("log", "[SSHFS] [失败] sshpass挂载失败，请检查密码和网络连接"))
-                
-        except Exception as e:
-            self.message_queue.put(("log", f"[SSHFS] [错误] sshpass后台挂载失败: {str(e)}"))
-    
-    def execute_interactive_sshfs(self, mount_cmd):
-        """执行交互式SSHFS挂载（在终端中）"""
-        try:
-            self.message_queue.put(("log", "[SSHFS] [信息] 启动交互式SSHFS挂载..."))
-            
-            # 检查可用的终端模拟器
-            terminal_emulators = [
-                "gnome-terminal",
-                "konsole",
-                "xfce4-terminal",
-                "lxterminal",
-                "mate-terminal",
-                "terminator",
-                "xterm"
-            ]
-            
-            terminal_cmd = None
-            for terminal in terminal_emulators:
-                try:
-                    result = subprocess.run(["which", terminal], capture_output=True, text=True)
-                    if result.returncode == 0:
-                        terminal_cmd = terminal
-                        break
-                except:
-                    continue
-            
-            if not terminal_cmd:
-                self.message_queue.put(("log", "[SSHFS] [错误] 未找到可用的终端模拟器"))
-                return False
-            
-            self.message_queue.put(("log", f"[SSHFS] [信息] 使用终端: {terminal_cmd}"))
-            
-            # 构建在终端中执行的命令
-            sshfs_cmd_str = ' '.join(mount_cmd)
-            
-            # 创建脚本（英文版本）
-            terminal_script = f"""
-echo "=== SSHFS Mount Process ==="
-echo "Command: {sshfs_cmd_str}"
-echo ""
-echo "Please enter SSH password:"
-
-# Execute sshfs command with user password input
-{sshfs_cmd_str} &
-sshfs_pid=$!
-
-echo ""
-echo "SSHFS process started (PID: $sshfs_pid)"
-echo "Waiting for mount to complete..."
-
-# Wait for mount to complete
-sleep 4
-
-# Check mount status
-if mountpoint -q "{mount_cmd[-1]}"; then
-    echo "SUCCESS: Mount completed successfully!"
-    echo "Mount point: {mount_cmd[-1]}"
-    echo "Process ID: $sshfs_pid"
-    echo ""
-    echo "Processing detachment..."
-    
-    # Use disown to detach process from terminal
-    disown $sshfs_pid 2>/dev/null || echo "Note: disown command not available, but mount may still persist"
-    
-    echo "Process detachment completed!"
-    echo "You can now safely close this terminal window."
-    echo "The mount will remain active."
-    
-else
-    echo "FAILED: Mount verification failed. Please check:"
-    echo "  1. Network connection"
-    echo "  2. SSH username and password"
-    echo "  3. Remote server accessibility"
-    echo "  4. Local mount directory permissions"
-    echo ""
-    echo "Process status:"
-    if kill -0 $sshfs_pid 2>/dev/null; then
-        echo "  SSHFS process is still running, may need more time"
-        echo "  Please check mount status later in the main program"
-    else
-        echo "  SSHFS process has exited, mount failed"
-    fi
-fi
-
-echo ""
-echo "Press Enter to close this window..."
-read
-"""
-            
-            # 根据不同的终端模拟器使用不同的参数
-            if terminal_cmd == "gnome-terminal":
-                cmd = [terminal_cmd, "--", "bash", "-c", terminal_script]
-            elif terminal_cmd == "konsole":
-                cmd = [terminal_cmd, "-e", "bash", "-c", terminal_script]
-            elif terminal_cmd in ["xfce4-terminal", "mate-terminal"]:
-                cmd = [terminal_cmd, "-e", f"bash -c '{terminal_script}'"]
-            elif terminal_cmd == "terminator":
-                cmd = [terminal_cmd, "-e", f"bash -c '{terminal_script}'"]
-            else:  # xterm等
-                cmd = [terminal_cmd, "-e", "bash", "-c", terminal_script]
-            
-            self.message_queue.put(("log", f"[SSHFS] [信息] 启动终端命令: {' '.join(cmd)}"))
-            
-            # 在新终端中执行
-            process = subprocess.Popen(cmd)
-            
-            self.message_queue.put(("log", "[SSHFS] [信息] 终端已启动，请在终端中输入密码"))
-            self.message_queue.put(("log", "[SSHFS] [信息] 等待用户在终端中完成操作..."))
-            
-            # 等待终端进程完成（用户输入密码并完成操作）
-            process.wait()
-            
-            # 检查挂载状态
-            self.root.after(2000, lambda: self.verify_mount_status(mount_cmd))
-            
-            return True
-            
-        except Exception as e:
-            self.message_queue.put(("log", f"[SSHFS] [错误] 交互式挂载失败: {str(e)}"))
-            return False
-
-    def check_sshpass_available(self):
-        """检查sshpass是否可用"""
-        try:
-            result = subprocess.run(["which", "sshpass"], capture_output=True, timeout=5)
-            return result.returncode == 0
-        except:
-            return False
-
     def execute_with_sshpass(self, mount_cmd, password):
         """使用sshpass执行挂载"""
         try:
@@ -4776,7 +4598,7 @@ read
                     # 如果更新失败，询问用户是否继续
                     self.message_queue.put(("log", "[软件包] [警告] 软件源更新失败，但将尝试继续安装"))
                 
-                self.message_queue.put(("log", "[软件包] 尝试继续安装软件包..."))
+                self.message_queue.put(("log", "[软件包] [信息] 尝试继续安装软件包..."))
                 
                 # 步骤2: 安装软件包
                 self.message_queue.put(("log", "[软件包] [步骤2] 步骤 2/2: 安装软件包"))
@@ -5185,10 +5007,10 @@ read
                 )
                 
                 if result.returncode == 0:
-                    self.message_queue.put(("log", f"[成功] {project_name} 已强制切换到分支 {new_branch}"))
+                    self.message_queue.put(("log", f"[分支] [成功] {project_name} 已强制切换到分支 {new_branch}"))
                     self.message_queue.put(("save_config", ))
                 else:
-                    self.message_queue.put(("log", f"[失败] {project_name} 分支切换失败: {result.stderr}"))
+                    self.message_queue.put(("log", f"[分支] [失败] {project_name} 分支切换失败: {result.stderr}"))
                     self.message_queue.put(("cancel_branch", project_name, old_branch))
                     
             except Exception as e:
@@ -5232,11 +5054,11 @@ read
                         capture_output=True, text=True, cwd=project_path
                     )
                     if result2.returncode == 0:
-                        self.message_queue.put(("log", f"[成功] {project_name} 已创建并切换到分支 {new_branch}"))
+                        self.message_queue.put(("log", f"[分支] [成功] {project_name} 已创建并切换到分支 {new_branch}"))
                         self.message_queue.put(("save_config", ))
                     else:
-                        self.message_queue.put(("log", f"[失败] {project_name} 远程分支创建也失败: {result2.stderr.strip()}"))
-                        self.message_queue.put(("log", f"[失败] {project_name} 分支切换失败，恢复到 {current_branch}"))
+                        self.message_queue.put(("log", f"[分支] [失败] {project_name} 远程分支创建也失败: {result2.stderr.strip()}"))
+                        self.message_queue.put(("log", f"[分支] [失败] {project_name} 分支切换失败，恢复到 {current_branch}"))
                         self.message_queue.put(("cancel_branch", project_name, current_branch))
                         
             except Exception as e:
@@ -5262,7 +5084,7 @@ read
         self.branch_switching[project_name] = True
         self.branch_vars[project_name].set(old_branch)
         self.branch_switching[project_name] = False
-        self.log_message(f"[取消] {project_name} 分支切换已取消")
+        self.log_message(f"[分支] [取消] {project_name} 分支切换已取消")
     
     def delete_project_dir(self, project_name):
         """删除项目目录"""
@@ -5340,7 +5162,7 @@ read
                     
                     for project_name in existing_projects:
                         self.message_queue.put(("status", f"正在为 {project_name} 安装依赖..."))
-                        self.message_queue.put(("log", f"[安装] 开始安装 {project_name} 的构建依赖"))
+                        self.message_queue.put(("log", f"[依赖] [安装] 开始安装 {project_name} 的构建依赖"))
                         
                         project_path = os.path.join(self.save_path.get(), project_name)
                         
@@ -5368,12 +5190,12 @@ read
                         process.wait()
                         
                         if process.returncode == 0:
-                            self.message_queue.put(("log", f"[成功] {project_name} 依赖安装完成"))
+                            self.message_queue.put(("log", f"[依赖] [成功] {project_name} 依赖安装完成"))
                         else:
-                            self.message_queue.put(("log", f"[失败] {project_name} 依赖安装失败，返回码: {process.returncode}"))
+                            self.message_queue.put(("log", f"[依赖] [失败] {project_name} 依赖安装失败，返回码: {process.returncode}"))
                     
                     self.message_queue.put(("status", "依赖安装完成"))
-                    self.message_queue.put(("log", "[完成] 所有选中项目的依赖安装完成"))
+                    self.message_queue.put(("log", "[依赖] [完成] 所有选中项目的依赖安装完成"))
                     
                 except Exception as e:
                     self.message_queue.put(("log", f"[错误] 依赖安装过程中出错: {str(e)}"))
@@ -5411,19 +5233,25 @@ read
             print(f"清除日志失败: {e}")
     
     def log_message(self, message):
-        """添加日志消息"""
-        timestamp = time.strftime("%H:%M:%S")
-        formatted_message = f"[{timestamp}] {message}\n"
-        
-        # 检查日志组件是否已创建，避免初始化时的错误
-        if hasattr(self, 'log_text') and self.log_text:
-            # 日志文本框保持NORMAL状态，允许选择和复制
-            self.log_text.insert(tk.END, formatted_message)
-            self.log_text.see(tk.END)
-        
-        # 同时更新状态栏（如果存在）
-        if hasattr(self, 'status_var') and self.status_var:
-            self.status_var.set(message)
+        """添加日志消息（线程安全）"""
+        # 检查是否在主线程中
+        if threading.current_thread() is threading.main_thread():
+            # 在主线程中直接操作GUI
+            timestamp = time.strftime("%H:%M:%S")
+            formatted_message = f"[{timestamp}] {message}\n"
+            
+            # 检查日志组件是否已创建，避免初始化时的错误
+            if hasattr(self, 'log_text') and self.log_text:
+                # 日志文本框保持NORMAL状态，允许选择和复制
+                self.log_text.insert(tk.END, formatted_message)
+                self.log_text.see(tk.END)
+            
+            # 同时更新状态栏（如果存在）
+            if hasattr(self, 'status_var') and self.status_var:
+                self.status_var.set(message)
+        else:
+            # 在后台线程中，使用消息队列确保线程安全
+            self.message_queue.put(("log", message))
     
     def clear_log(self):
         """清空日志"""
@@ -5499,7 +5327,7 @@ read
                 credentials = auth_result[0]
                 
                 if credentials['cancelled']:
-                    self.message_queue.put(("log", f"[取消] {project_name}: 用户取消了认证"))
+                    self.message_queue.put(("log", f"[认证] [取消] {project_name}: 用户取消了认证"))
                     self.message_queue.put(("hide_progress", project_name))
                     return False
                 
@@ -5558,11 +5386,11 @@ read
             
             # 切换分支
             if branch != "master":
-                self.message_queue.put(("log", f"[切换] {project_name}: 切换到分支 {branch}"))
+                self.message_queue.put(("log", f"[分支] [切换] {project_name}: 切换到分支 {branch}"))
                 self.message_queue.put(("update_progress", project_name, 80, f"切换分支..."))
                 
                 # 获取所有分支
-                self.message_queue.put(("log", f"[切换] {project_name}: 正在获取远程分支信息..."))
+                self.message_queue.put(("log", f"[分支] [信息] {project_name}: 正在获取远程分支信息..."))
                 try:
                     fetch_process = subprocess.Popen(
                         ["git", "fetch", "--all"],
@@ -5582,15 +5410,15 @@ read
                         if output:
                             line = output.strip()
                             if line and not line.startswith('From '):
-                                self.message_queue.put(("log", f"[切换] [fetch] {line}"))
+                                self.message_queue.put(("log", f"[Git] [fetch] {line}"))
                     
                     fetch_returncode = fetch_process.wait()
                     if fetch_returncode == 0:
-                        self.message_queue.put(("log", f"[切换] {project_name}: 远程分支获取完成"))
+                        self.message_queue.put(("log", f"[分支] [成功] {project_name}: 远程分支获取完成"))
                     else:
-                        self.message_queue.put(("log", f"[切换] {project_name}: 远程分支获取失败"))
+                        self.message_queue.put(("log", f"[分支] [失败] {project_name}: 远程分支获取失败"))
                 except Exception as e:
-                    self.message_queue.put(("log", f"[切换] {project_name}: fetch操作出错: {str(e)}"))
+                    self.message_queue.put(("log", f"[分支] [错误] {project_name}: fetch操作出错: {str(e)}"))
                 
                 # 切换分支
                 checkout_result = subprocess.run(
@@ -5631,7 +5459,7 @@ read
                 # 检查是否需要认证
                 query_url = repo_url
                 if self.requires_auth(project_name, repo_url):
-                    self.message_queue.put(("log", f"[认证] {project_name}: 分支查询需要身份认证"))
+                    self.message_queue.put(("log", f"[认证] [信息] {project_name}: 分支查询需要身份认证"))
                     
                     # 获取认证凭据（在主线程中执行）
                     credentials = None
@@ -5650,14 +5478,14 @@ read
                     credentials = auth_result[0]
                     
                     if credentials['cancelled']:
-                        self.message_queue.put(("log", f"[取消] {project_name}: 用户取消了认证"))
+                        self.message_queue.put(("log", f"[认证] [取消] {project_name}: 用户取消了认证"))
                         return
                     
                     if credentials['username'] and credentials['password']:
                         query_url = self.build_authenticated_url(repo_url, credentials['username'], credentials['password'])
-                        self.message_queue.put(("log", f"[认证] {project_name}: 分支查询认证信息已设置"))
+                        self.message_queue.put(("log", f"[认证] [信息] {project_name}: 分支查询认证信息已设置"))
                     else:
-                        self.message_queue.put(("log", f"[错误] {project_name}: 认证信息不完整"))
+                        self.message_queue.put(("log", f"[认证] [错误] {project_name}: 认证信息不完整"))
                         return
                 
                 result = subprocess.run(
@@ -5673,14 +5501,14 @@ read
                             branches.append(branch)
                     
                     self.message_queue.put(("branches", project_name, branches))
-                    self.message_queue.put(("log", f"[成功] {project_name} 分支查询完成，共找到 {len(branches)} 个分支"))
+                    self.message_queue.put(("log", f"[分支] [成功] {project_name} 分支查询完成，共找到 {len(branches)} 个分支"))
                 else:
-                    self.message_queue.put(("log", f"[失败] {project_name} 分支查询失败: {result.stderr}"))
+                    self.message_queue.put(("log", f"[分支] [失败] {project_name} 分支查询失败: {result.stderr}"))
                     
             except subprocess.TimeoutExpired:
-                self.message_queue.put(("log", f"[超时] {project_name} 分支查询超时"))
+                self.message_queue.put(("log", f"[分支] [超时] {project_name} 分支查询超时"))
             except Exception as e:
-                self.message_queue.put(("log", f"[错误] {project_name} 分支查询出错: {str(e)}"))
+                self.message_queue.put(("log", f"[分支] [错误] {project_name} 分支查询出错: {str(e)}"))
             finally:
                 self.message_queue.put(("progress", "stop"))
         
@@ -5691,19 +5519,19 @@ read
         def query_all_task():
             try:
                 projects = self.get_current_projects()
-                self.message_queue.put(("log", f"[调试] 开始查询所有分支，共 {len(projects)} 个项目"))
+                self.message_queue.put(("log", f"[分支] [调试] 开始查询所有分支，共 {len(projects)} 个项目"))
                 
                 for project_name in projects.keys():
                     try:
                         self.message_queue.put(("status", f"正在查询 {project_name} 的分支..."))
-                        self.message_queue.put(("log", f"[调试] 开始查询项目: {project_name}"))
+                        self.message_queue.put(("log", f"[分支] [调试] 开始查询项目: {project_name}"))
                         
                         repo_url = projects[project_name]
                         
                         # 检查是否需要认证
                         query_url = repo_url
                         if self.requires_auth(project_name, repo_url):
-                            self.message_queue.put(("log", f"[认证] {project_name}: 分支查询需要身份认证"))
+                            self.message_queue.put(("log", f"[认证] [信息] {project_name}: 分支查询需要身份认证"))
                             
                             # 获取认证凭据（在主线程中执行）
                             credentials = None
@@ -5722,14 +5550,14 @@ read
                             credentials = auth_result[0]
                             
                             if credentials['cancelled']:
-                                self.message_queue.put(("log", f"[取消] {project_name}: 用户取消了认证"))
+                                self.message_queue.put(("log", f"[认证] [取消] {project_name}: 用户取消了认证"))
                                 continue
                             
                             if credentials['username'] and credentials['password']:
                                 query_url = self.build_authenticated_url(repo_url, credentials['username'], credentials['password'])
-                                self.message_queue.put(("log", f"[认证] {project_name}: 分支查询认证信息已设置"))
+                                self.message_queue.put(("log", f"[认证] [信息] {project_name}: 分支查询认证信息已设置"))
                             else:
-                                self.message_queue.put(("log", f"[错误] {project_name}: 认证信息不完整"))
+                                self.message_queue.put(("log", f"[认证] [错误] {project_name}: 认证信息不完整"))
                                 continue
                         
                         result = subprocess.run(
@@ -5745,20 +5573,20 @@ read
                                     branches.append(branch)
                             
                             self.message_queue.put(("branches", project_name, branches))
-                            self.message_queue.put(("log", f"[成功] {project_name} 分支查询完成，找到 {len(branches)} 个分支"))
+                            self.message_queue.put(("log", f"[分支] [成功] {project_name} 分支查询完成，找到 {len(branches)} 个分支"))
                         else:
-                            self.message_queue.put(("log", f"[失败] {project_name} 分支查询失败: {result.stderr}"))
+                            self.message_queue.put(("log", f"[分支] [失败] {project_name} 分支查询失败: {result.stderr}"))
                             
                     except Exception as e:
-                        self.message_queue.put(("log", f"[错误] {project_name} 分支查询出错: {str(e)}"))
+                        self.message_queue.put(("log", f"[分支] [错误] {project_name} 分支查询出错: {str(e)}"))
                 
-                self.message_queue.put(("log", "[调试] 所有项目分支查询循环完成，准备发送完成消息"))
+                self.message_queue.put(("log", "[分支] [调试] 所有项目分支查询循环完成，准备发送完成消息"))
                 self.message_queue.put(("status", "所有分支查询完成"))
-                self.message_queue.put(("log", "[调试] 完成消息已发送"))
+                self.message_queue.put(("log", "[分支] [调试] 完成消息已发送"))
             except Exception as e:
-                self.message_queue.put(("log", f"[错误] query_all_branches 主任务出错: {str(e)}"))
+                self.message_queue.put(("log", f"[分支] [错误] query_all_branches 主任务出错: {str(e)}"))
                 import traceback
-                self.message_queue.put(("log", f"[错误] 详细错误信息: {traceback.format_exc()}"))
+                self.message_queue.put(("log", f"[分支] [错误] 详细错误信息: {traceback.format_exc()}"))
             finally:
                 # 确保进度条停止
                 self.message_queue.put(("progress", "stop"))
@@ -5778,7 +5606,7 @@ read
             try:
                 self.message_queue.put(("progress", "start"))
                 self.message_queue.put(("status", "正在查询远程分支和本地分支..."))
-                self.message_queue.put(("log", "[合并查询] 开始查询远程分支和检测本地分支"))
+                self.message_queue.put(("log", "[分支] [开始] 开始查询远程分支和检测本地分支"))
                 
                 projects = self.get_current_projects()
                 
@@ -5796,7 +5624,7 @@ read
                         # 检查是否需要认证
                         query_url = repo_url
                         if self.requires_auth(project_name, repo_url):
-                            self.message_queue.put(("log", f"[认证] {project_name}: 分支查询需要身份认证"))
+                            self.message_queue.put(("log", f"[认证] [信息] {project_name}: 分支查询需要身份认证"))
                             
                             # 获取认证凭据（在主线程中执行）
                             credentials = None
@@ -5815,14 +5643,14 @@ read
                             credentials = auth_result[0]
                             
                             if credentials['cancelled']:
-                                self.message_queue.put(("log", f"[取消] {project_name}: 用户取消了认证"))
+                                self.message_queue.put(("log", f"[认证] [取消] {project_name}: 用户取消了认证"))
                                 continue
                             
                             if credentials['username'] and credentials['password']:
                                 query_url = self.build_authenticated_url(repo_url, credentials['username'], credentials['password'])
-                                self.message_queue.put(("log", f"[认证] {project_name}: 分支查询认证信息已设置"))
+                                self.message_queue.put(("log", f"[认证] [信息] {project_name}: 分支查询认证信息已设置"))
                             else:
-                                self.message_queue.put(("log", f"[错误] {project_name}: 认证信息不完整"))
+                                self.message_queue.put(("log", f"[认证] [错误] {project_name}: 认证信息不完整"))
                                 continue
                         
                         result = subprocess.run(
@@ -5892,12 +5720,12 @@ read
                             local_count = len(local_branches)
                             total_count = len(merged_branches)
                             
-                            self.message_queue.put(("log", f"[合并查询] {project_name} 完成"))
-                            self.message_queue.put(("log", f"  - 远程分支: {remote_count} 个"))
-                            self.message_queue.put(("log", f"  - 本地分支: {local_count} 个"))  
-                            self.message_queue.put(("log", f"  - 合并后总计: {total_count} 个"))
+                            self.message_queue.put(("log", f"[分支] [完成] {project_name} 合并查询完成"))
+                            self.message_queue.put(("log", f"[分支] [信息]   - 远程分支: {remote_count} 个"))
+                            self.message_queue.put(("log", f"[分支] [信息]   - 本地分支: {local_count} 个"))
+                            self.message_queue.put(("log", f"[分支] [信息]   - 合并后总计: {total_count} 个"))
                             if current_branch:
-                                self.message_queue.put(("log", f"[合并查询] {project_name} 获取本地仓库当前分支..."))
+                                self.message_queue.put(("log", f"[分支] [信息] {project_name} 获取本地仓库当前分支..."))
                                 current_result = subprocess.run(
                                     ["git", "rev-parse", "--abbrev-ref", "HEAD"],
                                     capture_output=True, text=True, cwd=project_path
@@ -5905,24 +5733,24 @@ read
                                 
                                 if current_result.returncode == 0:
                                     current_branch = current_result.stdout.strip()
-                                    self.message_queue.put(("log", f"[合并查询] {project_name} 当前分支: {current_branch}"))
+                                    self.message_queue.put(("log", f"[分支] [信息] {project_name} 当前分支: {current_branch}"))
                                 else:
                                     current_branch = None
-                                    self.message_queue.put(("log", f"[合并查询] {project_name} 无法获取当前分支"))
+                                    self.message_queue.put(("log", f"[分支] [警告] {project_name} 无法获取当前分支"))
                             
                         else:
-                            self.message_queue.put(("log", f"[合并查询] {project_name} 未找到任何分支"))
+                            self.message_queue.put(("log", f"[分支] [警告] {project_name} 未找到任何分支"))
                             
                     except subprocess.TimeoutExpired:
-                        self.message_queue.put(("log", f"[合并查询] {project_name} 远程查询超时"))
+                        self.message_queue.put(("log", f"[分支] [超时] {project_name} 远程查询超时"))
                     except Exception as e:
-                        self.message_queue.put(("log", f"[合并查询] {project_name} 查询出错: {str(e)}"))
+                        self.message_queue.put(("log", f"[分支] [错误] {project_name} 查询出错: {str(e)}"))
                 
                 self.message_queue.put(("status", "合并查询完成"))
-                self.message_queue.put(("log", "[合并查询] 所有项目的远程分支和本地分支查询完成"))
+                self.message_queue.put(("log", "[分支] [完成] 所有项目的远程分支和本地分支查询完成"))
                 
             except Exception as e:
-                self.message_queue.put(("log", f"[合并查询] 查询过程中出错: {str(e)}"))
+                self.message_queue.put(("log", f"[分支] [错误] 查询过程中出错: {str(e)}"))
             finally:
                 self.message_queue.put(("progress", "stop"))
         
@@ -5939,7 +5767,7 @@ read
         def download_all_task():
             try:
                 self.message_queue.put(("progress", "start"))
-                self.message_queue.put(("log", f"[开始] 准备并行下载 {len(selected_projects)} 个项目"))
+                self.message_queue.put(("log", f"[下载] [开始] 准备并行下载 {len(selected_projects)} 个项目"))
                 
                 # 确保保存目录存在
                 os.makedirs(self.save_path.get(), exist_ok=True)
@@ -5976,17 +5804,17 @@ read
                             status = "成功" if success else "失败"
                             self.message_queue.put(("status", f"[{completed}/{total}] {project_name} 下载{status}"))
                         except Exception as e:
-                            self.message_queue.put(("log", f"[异常] {project_name} 下载异常: {str(e)}"))
+                            self.message_queue.put(("log", f"[下载] [异常] {project_name} 下载异常: {str(e)}"))
                 
                 self.message_queue.put(("status", "所有选中项目下载完成"))
-                self.message_queue.put(("log", f"[完成] 并行下载完成! 项目保存在: {self.save_path.get()}"))
+                self.message_queue.put(("log", f"[下载] [完成] 并行下载完成! 项目保存在: {self.save_path.get()}"))
                 
                 # 更新所有项目的状态显示
                 for project_name in selected_projects:
                     self.message_queue.put(("update_project_status", project_name))
                 
             except Exception as e:
-                self.message_queue.put(("log", f"[错误] 下载过程中出错: {str(e)}"))
+                self.message_queue.put(("log", f"[下载] [错误] 下载过程中出错: {str(e)}"))
             finally:
                 self.message_queue.put(("progress", "stop"))
         
@@ -6592,10 +6420,10 @@ read
         """检查并加载hosts文件"""
         def check_task():
             try:
-                self.message_queue.put(("log", "[Host] 正在检查hosts文件..."))
+                self.message_queue.put(("log", "[Host] [信息] 正在检查hosts文件..."))
                 
                 if not os.path.exists(self.host_file_path):
-                    self.message_queue.put(("log", "[Host] hosts文件不存在"))
+                    self.message_queue.put(("log", "[Host] [信息] hosts文件不存在"))
                     self.message_queue.put(("host_status", "文件不存在"))
                     return
                 
@@ -6607,7 +6435,7 @@ read
                     # 检查是否包含github.com条目
                     github_entry = "140.82.112.4 github.com"
                     if github_entry not in content:
-                        self.message_queue.put(("log", "[Host] 未找到github.com条目，将在文件末尾添加"))
+                        self.message_queue.put(("log", "[Host] [信息] 未找到github.com条目，将在文件末尾添加"))
                         content += f"\n\n{github_entry}\n"
                         
                         # 使用pkexec添加条目
@@ -6615,23 +6443,23 @@ read
                         result = subprocess.run(add_cmd, capture_output=True, text=True, timeout=30)
                         
                         if result.returncode == 0:
-                            self.message_queue.put(("log", "[Host] 已添加github.com条目到hosts文件"))
+                            self.message_queue.put(("log", "[Host] [成功] 已添加github.com条目到hosts文件"))
                             # 重新读取文件内容
                             with open(self.host_file_path, 'r', encoding='utf-8') as f:
                                 content = f.read()
                         else:
                             if "cancelled" in result.stderr.lower():
-                                self.message_queue.put(("log", "[Host] 用户取消了添加github.com条目的权限授权"))
+                                self.message_queue.put(("log", "[Host] [取消] 用户取消了添加github.com条目的权限授权"))
                             else:
                                 self.message_queue.put(("log", f"[Host] 添加github.com条目失败: {result.stderr}"))
                     else:
-                        self.message_queue.put(("log", "[Host] hosts文件中已存在github.com条目"))
+                        self.message_queue.put(("log", "[Host] [信息] hosts文件中已存在github.com条目"))
                     
                     self.message_queue.put(("host_content", content))
                     self.message_queue.put(("host_status", "文件正常"))
                     
                 except PermissionError:
-                    self.message_queue.put(("log", "[Host] 没有权限读取hosts文件"))
+                    self.message_queue.put(("log", "[Host] [错误] 没有权限读取hosts文件"))
                     self.message_queue.put(("host_status", "权限不足"))
                 except Exception as e:
                     self.message_queue.put(("log", f"[Host] 读取hosts文件时出错: {str(e)}"))
@@ -6931,10 +6759,10 @@ read
                 
                 if os.path.exists(ssh_key_path):
                     self.message_queue.put(("ssh_key_status", "已存在"))
-                    self.message_queue.put(("log", "[SSH Key] SSH公钥已存在"))
+                    self.message_queue.put(("log", "[SSH Key] [信息] SSH公钥已存在"))
                 else:
                     self.message_queue.put(("ssh_key_status", "未生成"))
-                    self.message_queue.put(("log", "[SSH Key] SSH公钥未生成"))
+                    self.message_queue.put(("log", "[SSH Key] [信息] SSH公钥未生成"))
                     
             except Exception as e:
                 self.message_queue.put(("ssh_key_status", "检测失败"))
