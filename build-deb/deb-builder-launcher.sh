@@ -194,37 +194,36 @@ show_built_packages() {
         project_name=$(basename "$(pwd)")
     fi
     
-    # 获取当前构建产生的deb包（通过时间戳筛选最近2分钟内创建的包）
-    local recent_debs=$(find .. -maxdepth 1 -name "*.deb" -mmin -2 2>/dev/null || true)
+    # 检查packages目录是否存在
+    if [ ! -d "$packages_dir" ]; then
+        error "packages目录不存在: $packages_dir"
+        return 1
+    fi
+    
+    # 从packages目录获取当前构建产生的deb包（通过时间戳筛选最近2分钟内创建的包）
+    local recent_debs=$(find "$packages_dir" -maxdepth 1 -name "*.deb" -mmin -2 2>/dev/null || true)
     
     # 如果没有找到最近的包，则尝试通过项目名筛选
     if [ -z "$recent_debs" ]; then
-        recent_debs=$(find .. -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-tools-*.deb" 2>/dev/null || true)
+        recent_debs=$(find "$packages_dir" -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-tools-*.deb" 2>/dev/null || true)
     fi
     
     if [ -n "$recent_debs" ]; then
         log "构建产物 (已移动到packages目录):"
         ls -la $recent_debs
-        echo "$recent_debs"
+        echo ""
         
-        # 显示packages目录中的所有文件
-        if [ -d "$packages_dir" ]; then
-            echo ""
-            log "packages目录内容:"
-            ls -la "$packages_dir"/*.{deb,buildinfo,changes} 2>/dev/null || true
-        fi
+        # 显示packages目录中的所有相关文件
+        log "packages目录内容:"
+        ls -la "$packages_dir"/*.{deb,buildinfo,changes} 2>/dev/null || true
+        echo ""
         
         # 生成安装命令（使用packages目录中的包）
-        local deb_files=$(find "$packages_dir" -maxdepth 1 -name "*.deb" -mmin -2 2>/dev/null | tr '\n' ' ')
-        if [ -z "$deb_files" ]; then
-            deb_files=$(find "$packages_dir" -maxdepth 1 -name "*${project_name}*.deb" -o -name "dfm-tools-*.deb" 2>/dev/null | tr '\n' ' ')
-        fi
+        local deb_files=$(echo "$recent_debs" | tr '\n' ' ')
         
-        if [ -n "$deb_files" ]; then
-            echo ""
-            log " sudo apt install $deb_files"
-            log " sudo dpkg -i $deb_files"
-        fi
+        log "安装命令:"
+        log "  sudo apt install $deb_files"
+        log "  sudo dpkg -i $deb_files"
     else
         error "未找到当前项目的构建产物"
     fi

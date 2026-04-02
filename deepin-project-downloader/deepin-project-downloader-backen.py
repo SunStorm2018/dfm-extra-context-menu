@@ -389,7 +389,7 @@ class ProjectConfig:
         """应用信息配置类"""
         APP_NAME = "DFM 开发工具箱"
         APP_AUTHOR = "zhanghongyuan"
-        APP_EMAIL = "2063218120@qq.com"
+        APP_EMAIL = "zhanghongyuan@uniontech.com(2063218120@qq.com)"
         APP_LICENSE = "GNU General Public License v3.0"
         APP_PROJECT_URL = "https://github.com/sunstorme/dfm-tools"
         APP_DESCRIPTION = (
@@ -3290,7 +3290,6 @@ class DeepinProjectDownloader:
             dialog.geometry("450x220")
             dialog.resizable(False, False)
             dialog.transient(self.root)
-            dialog.grab_set()
             
             # 在应用窗口中间显示
             dialog.update_idletasks()
@@ -3316,7 +3315,6 @@ class DeepinProjectDownloader:
             password_var = tk.StringVar()
             password_entry = ttk.Entry(dialog, textvariable=password_var, show="*", width=35)
             password_entry.pack(pady=(0, 20))
-            password_entry.focus()
             
             # 按钮框架
             button_frame = ttk.Frame(dialog)
@@ -3360,8 +3358,13 @@ class DeepinProjectDownloader:
             password_entry.bind('<Return>', lambda e: on_ok())
             dialog.bind('<Escape>', lambda e: on_cancel())
             
-            # 设置对话框为模态
-            dialog.focus_force()
+            # 关键修复:按照Git授权框的正确顺序设置焦点和模态状态
+            # 1. 先设置焦点到密码输入框
+            password_entry.focus_set()
+            # 2. 然后设置为模态对话框
+            dialog.grab_set()
+            # 3. 等待对话框关闭
+            dialog.wait_window()
             
         except Exception as e:
             self.message_queue.put(("log", f"[SSHFS] [错误] 密码对话框创建失败: {str(e)}"))
